@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des fiches de paie</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        a { text-decoration: none; color: #333; }
+        header { margin-bottom: 20px; }
+        h1 { margin-bottom: 5px; }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        th {
+            background: #333;
+            color: white;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        form { margin-bottom: 10px; }
+
+        label { margin-right: 5px; }
+
+        input, select {
+            margin-right: 8px;
+            margin-bottom: 5px;
+        }
+
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<header>
+    <a th:href="@{/}">&larr; Retour au dashboard</a>
+    <h1>Gestion des fiches de paie</h1>
+</header>
+
+<!-- SECTION : Ajout d'une fiche de paie -->
+<div class="section">
+    <h2>Ajouter une fiche de paie</h2>
+    <form th:action="@{/payrolls/add}" method="post">
+        <label>Employé :</label>
+        <select name="empId" required>
+            <option value="" selected disabled>Choisir un employé</option>
+            <option th:each="e : ${employees}"
+                    th:value="${e.id}"
+                    th:text="${e.fname + ' ' + e.sname}">
+            </option>
+        </select>
+
+        <label>Date :</label>
+        <input type="date" name="date" required>
+
+        <label>Salaire brut :</label>
+        <input type="number" name="salary" step="0.01" required>
+
+        <button type="submit">Créer la fiche</button>
+    </form>
+</div>
+
+<!-- SECTION : Liste des fiches de paie -->
+<div class="section">
+    <h2>Liste des fiches de paie</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Employé</th>
+            <th>Date</th>
+            <th>Salaire brut</th>
+            <th>Net à payer</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${payrolls}">
+            <td th:text="${p.idPayroll}"></td>
+            <td th:text="${p.employee != null ? p.employee.fname + ' ' + p.employee.sname : '—'}"></td>
+            <td th:text="${p.date}"></td>
+            <td th:text="${p.salary}"></td>
+            <td th:text="${p.netPay}"></td>
+            <td>
+                <a th:href="@{/payrolls(id=${p.idPayroll})}">Voir détails</a>
+                &nbsp;|&nbsp;
+                <form th:action="@{/payrolls/delete}" method="post" style="display:inline;">
+                    <input type="hidden" name="id" th:value="${p.idPayroll}">
+                    <button type="submit" onclick="return confirm('Supprimer cette fiche de paie ?');">
+                        Supprimer
+                    </button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- SECTION : Détails d'une fiche sélectionnée (lignes de paie) -->
+<div class="section" th:if="${selectedPayroll != null}">
+    <h2 th:text="'Détails de la fiche de paie n° ' + ${selectedPayroll.idPayroll}"></h2>
+    <p>
+        <strong>Employé :</strong>
+        <span th:text="${selectedPayroll.employee != null ? selectedPayroll.employee.fname + ' ' + selectedPayroll.employee.sname : '—'}"></span><br>
+        <strong>Date :</strong>
+        <span th:text="${selectedPayroll.date}"></span><br>
+        <strong>Salaire brut :</strong>
+        <span th:text="${selectedPayroll.salary}"></span><br>
+        <strong>Net à payer :</strong>
+        <span th:text="${selectedPayroll.netPay}"></span>
+    </p>
+
+    <!-- Formulaire pour ajouter une ligne (prime / déduction) -->
+    <h3>Ajouter une ligne (prime ou déduction)</h3>
+    <form th:action="@{/payrolls/add-line}" method="post">
+        <input type="hidden" name="payrollId" th:value="${selectedPayroll.idPayroll}">
+
+        <label>Libellé :</label>
+        <input type="text" name="label" required>
+
+        <label>Montant :</label>
+        <input type="number" name="amount" step="0.01" required>
+
+        <label>Type :</label>
+        <select name="typeList" required>
+            <option value="Prime">Prime</option>
+            <option value="Déduction">Déduction</option>
+        </select>
+
+        <button type="submit">Ajouter la ligne</button>
+    </form>
+
+    <!-- Tableau des lignes -->
+    <h3>Lignes associées</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Libellé</th>
+            <th>Montant</th>
+            <th>Type</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="l : ${lines}">
+            <td th:text="${l.idLine}"></td>
+            <td th:text="${l.label}"></td>
+            <td th:text="${l.amount}"></td>
+            <td th:text="${l.typeList}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>

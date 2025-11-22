@@ -1,9 +1,12 @@
 package com.projet.gestion_rh.repository;
 
+import com.projet.gestion_rh.model.Departement;
 import com.projet.gestion_rh.model.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
+
 
 // <Employee, Integer> car l'ID de Employee est un 'int'
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
@@ -14,8 +17,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
     // Pour vérifier le mot de passe (si vous ne le hashez pas encore)
     Optional<Employee> findByEmailAndPassword(String email, String password);
-    
-    // Pour la recherche par département (si besoin)
-    // Spring comprend que "Departement" est un objet et cherche par son ID
-    // List<Employee> findByDepartementId(int departementId);
+
+    List<Employee> findByDepartement(Departement departement);
+
 }
