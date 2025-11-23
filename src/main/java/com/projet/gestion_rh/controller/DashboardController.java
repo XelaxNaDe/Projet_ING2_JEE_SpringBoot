@@ -1,145 +1,90 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Departement;
 import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.repository.*;
+import com.projet.gestion_rh.repository.DepartementRepository;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+import com.projet.gestion_rh.repository.PayrollRepository;
+import com.projet.gestion_rh.repository.ProjetRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
 import java.util.Optional;
 
 @Controller
-public class    DashboardController {
+public class DashboardController {
 
+    // Repositories nécessaires pour le Dashboard
     private final DepartementRepository departementRepository;
     private final EmployeeRepository employeeRepository;
     private final ProjetRepository projetRepository;
     private final PayrollRepository payrollRepository;
-    private final RoleRepository roleRepository;
-    private final IntStringPayrollRepository intStringPayrollRepository;
 
-    public DashboardController(DepartementRepository departementRepository,
-                               EmployeeRepository employeeRepository,
-                               ProjetRepository projetRepository,
-                               PayrollRepository payrollRepository,
-                               RoleRepository roleRepository,
-                               IntStringPayrollRepository intStringPayrollRepository) {
-        this.departementRepository = departementRepository;
-        this.employeeRepository = employeeRepository;
-        this.projetRepository = projetRepository;
-        this.payrollRepository = payrollRepository;
-        this.roleRepository = roleRepository;
-        this.intStringPayrollRepository = intStringPayrollRepository;
+    public DashboardController(DepartementRepository dr, EmployeeRepository er, ProjetRepository pr, PayrollRepository payR) {
+        this.departementRepository = dr;
+        this.employeeRepository = er;
+        this.projetRepository = pr;
+        this.payrollRepository = payR;
     }
 
-    // 🏠 PAGE D'ACCUEIL
+    // AFFICHER LA PAGE DE LOGIN
+    @GetMapping("/login")
+    public String showLoginForm() {
+        return "connexion"; // Cherche src/main/resources/templates/login.html
+    }
+
+    // TRAITER LE FORMULAIRE DE LOGIN
+    @PostMapping("/login")
+    public String processLogin(@RequestParam String email, 
+                               @RequestParam String password, 
+                               HttpSession session, 
+                               Model model) {
+        
+
+        Optional<Employee> empOpt = employeeRepository.findByEmail(email);
+
+        if (empOpt.isPresent()) {
+            Employee emp = empOpt.get();
+            
+            if (emp.getPassword().equals(password)) {
+                System.out.println(" Mot de passe correct");
+                session.setAttribute("currentUser", emp);
+                return "redirect:/"; 
+            } else {
+                System.out.println("Mot de passe incorrect");
+            }
+        } else {
+            System.out.println("Email introuvable");
+        }
+
+        model.addAttribute("errorMessage", "Email ou mot de passe incorrect.");
+        return "connexion";
+    }
+
+    // DÉCONNEXION
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/login";
+    }
+
     @GetMapping("/")
-    public String home(Model model) {
+    public String home(Model model, HttpSession session) {
+        // Sécurité : Si pas connecté, on redirige vers le login
+        // (Comme c'est le même contrôleur, Spring trouve le chemin tout de suite)
+        if (session.getAttribute("currentUser") == null) {
+            return "redirect:/login";
+        }
+
+        // Chargement des statistiques pour le dashboard
         model.addAttribute("departementCount", departementRepository.count());
         model.addAttribute("employeeCount", employeeRepository.count());
         model.addAttribute("projetCount", projetRepository.count());
         model.addAttribute("payrollCount", payrollRepository.count());
-        return "dashboard"; // dashboard.html
-    }
-
-    // 🏢 PAGE DEPARTEMENTS
-    @GetMapping("/departements")
-    public String departements(@RequestParam(name = "selectedDeptId", required = false) Integer selectedDeptId,
-                               Model model) {
-
-        model.addAttribute("departements", departementRepository.findAll());
-        model.addAttribute("employees", employeeRepository.findAll());
-
-        // Si un département est sélectionné, on affiche ses membres
-        if (selectedDeptId != null) {
-            Optional<Departement> optDept = departementRepository.findById(selectedDeptId);
-            if (optDept.isPresent()) {
-                Departement d = optDept.get();
-                List<Employee> members = employeeRepository.findByDepartement(d);
-                model.addAttribute("selectedDepartement", d);
-                model.addAttribute("members", members);
-            }
-        }
-
-        return "departements"; // departements.html
-    }
-
-    // ➜ Ajouter un département
-    @PostMapping("/departements/add")
-    public String addDepartement(@RequestParam String nomDepartement,
-                                 @RequestParam(required = false) Integer idChefDepartement) {
-
-        Departement d = new Departement();
-        d.setNomDepartement(nomDepartement);
-        d.setIdChefDepartement(idChefDepartement);
-        departementRepository.save(d);
-
-        return "redirect:/departements";
-    }
-
-    // ➜ Affecter un employé à un département
-    @PostMapping("/departements/assign")
-    public String assignEmployeeToDepartement(@RequestParam int deptId,
-                                              @RequestParam int empId) {
-
-        Optional<Departement> optDept = departementRepository.findById(deptId);
-        Optional<Employee> optEmp = employeeRepository.findById(empId);
-
-        if (optDept.isPresent() && optEmp.isPresent()) {
-            Employee emp = optEmp.get();
-            emp.setDepartement(optDept.get());
-            employeeRepository.save(emp);
-        }
-
-        return "redirect:/departements?selectedDeptId=" + deptId;
-    }
-
-    // 👥 PAGE EMPLOYES
-    @GetMapping("/employees")
-    public String employees(Model model) {
-        model.addAttribute("employees", employeeRepository.findAll());
-        model.addAttribute("departements", departementRepository.findAll());
-        return "employees"; // employees.html
-    }
-
-    // ➜ Ajouter un employé
-    @PostMapping("/employees/add")
-    public String addEmployee(@RequestParam String fname,
-                              @RequestParam String sname,
-                              @RequestParam(required = false) String gender,
-                              @RequestParam String email,
-                              @RequestParam(required = false) String position,
-                              @RequestParam(required = false) String grade,
-                              @RequestParam(required = false) Integer departementId) {
-
-        Employee e = new Employee();
-        e.setFname(fname);
-        e.setSname(sname);
-        e.setGender(gender);
-        e.setEmail(email);
-        e.setPassword("password"); // à sécuriser plus tard
-        e.setPosition(position);
-        e.setGrade(grade);
-
-        if (departementId != null) {
-            departementRepository.findById(departementId)
-                    .ifPresent(e::setDepartement);
-        }
-
-        employeeRepository.save(e);
-        return "redirect:/employees";
-    }
-
-    // ➜ Supprimer un employé
-    @PostMapping("/employees/delete")
-    public String deleteEmployee(@RequestParam int id) {
-        if (employeeRepository.existsById(id)) {
-            employeeRepository.deleteById(id);
-        }
-        return "redirect:/employees";
+        
+        return "dashboard"; // Cherche src/main/resources/templates/dashboard.html
     }
 }

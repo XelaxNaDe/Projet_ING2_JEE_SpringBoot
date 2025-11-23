@@ -27,8 +27,8 @@ public class Payroll {
     @Column(nullable = false)
     private int salary;
 
-    @Column(name = "netPay", nullable = false)
-    private double netPay;
+    @Column(name = "net_Pay", nullable = false)
+    private double netPay = 0.0;
 
     // Liste des primes/déductions (OneToMany)
     @OneToMany(mappedBy = "payroll", cascade = CascadeType.ALL, orphanRemoval = true)

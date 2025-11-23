@@ -24,7 +24,7 @@
     <h1>Gestion des employés</h1>
 </header>
 
-<div class="section">
+<div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
     <h2>Ajouter un employé</h2>
     <form th:action="@{/employees/add}" method="post">
         <label>Prénom :</label>
@@ -84,12 +84,15 @@
             <td th:text="${e.grade}"></td>
             <td th:text="${e.departement != null ? e.departement.nomDepartement : '—'}"></td>
             <td>
-                <form th:action="@{/employees/delete}" method="post" style="display:inline;">
+                <form th:if="${session.currentUser.hasRole('ADMINISTRATOR')}" 
+                      th:action="@{/employees/delete}" method="post" style="display:inline;">
                     <input type="hidden" name="id" th:value="${e.id}">
-                    <button type="submit" onclick="return confirm('Supprimer cet employé ?');">
+                    <button type="submit" onclick="return confirm('Supprimer cet employé ?');" style="background-color: #e74c3c; color: white; border:none; padding:5px;">
                         Supprimer
                     </button>
                 </form>
+                
+                <span th:unless="${session.currentUser.hasRole('ADMINISTRATOR')}" style="color:gray;">👁️</span>
             </td>
         </tr>
         </tbody>

@@ -23,7 +23,7 @@
     <h1>Gestion des départements</h1>
 </header>
 
-<div class="section">
+<div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
     <h2>Ajouter un département</h2>
     <form th:action="@{/departements/add}" method="post">
         <label>Nom :</label>
@@ -34,7 +34,7 @@
     </form>
 </div>
 
-<div class="section">
+<div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR') or session.currentUser.hasRole('HEADDEPARTEMENT')}">
     <h2>Affecter un employé à un département</h2>
     <form th:action="@{/departements/assign}" method="post">
         <label>Département :</label>
@@ -53,6 +53,9 @@
 
         <button type="submit">Affecter</button>
     </form>
+    <p style="font-size:0.8em; color:orange;" th:if="${session.currentUser.hasRole('HEADDEPARTEMENT') and !session.currentUser.hasRole('ADMINISTRATOR')}">
+        Note : Vous ne pouvez affecter des employés qu'à votre propre département.
+    </p>
 </div>
 
 <div class="section">

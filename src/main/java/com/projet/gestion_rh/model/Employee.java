@@ -49,7 +49,13 @@ public class Employee {
     private Set<Projet> projets = new HashSet<>();
 
     public Employee() {}
-
+    
+    public boolean hasRole(String roleName) {
+        if (this.roles == null) return false;
+        return this.roles.stream()
+                   .anyMatch(r -> r.getNomRole().equals(roleName));
+    }
+    
     // Constructeur utile pour l'inscription
     public Employee(String fname, String sname, String email, String password, Departement departement) {
         this.fname = fname;

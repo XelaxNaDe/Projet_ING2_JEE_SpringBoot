@@ -1,67 +1,73 @@
 package com.projet.gestion_rh.controller;
 
 import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.repository.DepartementRepository;
 import com.projet.gestion_rh.repository.EmployeeRepository;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
-@RestController
-@RequestMapping("/api/employees")
+@Controller
 public class EmployeeController {
 
     private final EmployeeRepository employeeRepository;
+    private final DepartementRepository departementRepository;
 
-    public EmployeeController(EmployeeRepository employeeRepository) {
+    public EmployeeController(EmployeeRepository employeeRepository, DepartementRepository departementRepository) {
         this.employeeRepository = employeeRepository;
+        this.departementRepository = departementRepository;
     }
 
-    @GetMapping
-    public List<Employee> getAll() {
-        return employeeRepository.findAll();
+    // LECTURE : Tout le monde connecté peut voir la liste
+    @GetMapping("/employees")
+    public String listEmployees(Model model, HttpSession session) {
+        if (session.getAttribute("currentUser") == null) return "redirect:/login";
+
+        model.addAttribute("employees", employeeRepository.findAll());
+        model.addAttribute("departements", departementRepository.findAll());
+        return "employees"; 
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Employee> getOne(@PathVariable int id) {
-        return employeeRepository.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
+    // AJOUT : Seul l'ADMIN peut ajouter
+    @PostMapping("/employees/add")
+    public String addEmployee(@RequestParam String fname,
+                              @RequestParam String sname,
+                              @RequestParam(required = false) String gender,
+                              @RequestParam String email,
+                              @RequestParam(required = false) String position,
+                              @RequestParam(required = false) String grade,
+                              @RequestParam(required = false) Integer departementId,
+                              HttpSession session) {
+        
+        Employee user = (Employee) session.getAttribute("currentUser");
+        
+        if (user != null && user.hasRole("ADMINISTRATOR")) {
+            Employee e = new Employee();
+            e.setFname(fname); e.setSname(sname); e.setGender(gender);
+            e.setEmail(email); e.setPassword("password"); // Défaut
+            e.setPosition(position); e.setGrade(grade);
 
-    @PostMapping
-    public Employee create(@RequestBody Employee employee) {
-        // TODO plus tard : encoder password, vérifier email unique, etc.
-        return employeeRepository.save(employee);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Employee> update(@PathVariable int id,
-                                           @RequestBody Employee emp) {
-        return employeeRepository.findById(id)
-                .map(existing -> {
-                    existing.setFname(emp.getFname());
-                    existing.setSname(emp.getSname());
-                    existing.setGender(emp.getGender());
-                    existing.setEmail(emp.getEmail());
-                    existing.setPassword(emp.getPassword());
-                    existing.setPosition(emp.getPosition());
-                    existing.setGrade(emp.getGrade());
-                    existing.setDepartement(emp.getDepartement());
-                    existing.setRoles(emp.getRoles());
-                    existing.setProjets(emp.getProjets());
-                    return ResponseEntity.ok(employeeRepository.save(existing));
-                })
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable int id) {
-        if (!employeeRepository.existsById(id)) {
-            return ResponseEntity.notFound().build();
+            if (departementId != null) {
+                departementRepository.findById(departementId).ifPresent(e::setDepartement);
+            }
+            employeeRepository.save(e);
         }
-        employeeRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        return "redirect:/employees";
+    }
+
+    // SUPPRESSION : Seul l'ADMIN peut supprimer
+    @PostMapping("/employees/delete")
+    public String deleteEmployee(@RequestParam int id, HttpSession session) {
+        Employee user = (Employee) session.getAttribute("currentUser");
+
+        if (user != null && user.hasRole("ADMINISTRATOR")) {
+            if (employeeRepository.existsById(id)) {
+                employeeRepository.deleteById(id);
+            }
+        }
+        return "redirect:/employees";
     }
 }
-
