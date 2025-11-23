@@ -1,9 +1,8 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.model.Projet;
-import com.projet.gestion_rh.repository.EmployeeRepository;
-import com.projet.gestion_rh.repository.ProjetRepository;
+import java.time.LocalDate;
+import java.util.Optional;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -11,8 +10,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
-import java.util.Optional;
+import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.model.Projet;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+import com.projet.gestion_rh.repository.ProjetRepository;
 
 @Controller
 public class ProjetController {
@@ -29,6 +30,7 @@ public class ProjetController {
     // PAGE PROJETS
     @GetMapping("/projets")
     public String projets(@RequestParam(required = false) Integer id,
+                          @RequestParam(required = false) Integer editId,
                           Model model) {
 
         model.addAttribute("projets", projetRepository.findAll());
@@ -43,32 +45,58 @@ public class ProjetController {
             }
         }
 
+        if (editId != null){
+            projetRepository.findById(editId).ifPresent(p -> model.addAttribute("projetToEdit", p));
+        }
         return "projets";
     }
 
-    // Ajouter un projet
-    @PostMapping("/projets/add")
-    public String addProjet(@RequestParam String nomProjet,
-                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
-                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
-                            @RequestParam(required = false) Integer chefProjetId,
-                            @RequestParam String etat) {
+   // AJOUTER UN PROJET
+   @PostMapping("/projets/add")
+   public String addProjet(@RequestParam String nomProjet,
+                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+                           @RequestParam(required = false) Integer chefProjetId,
+                           @RequestParam String etat) {
 
-        Projet p = new Projet();
-        p.setNomProjet(nomProjet);
-        p.setDateDebut(dateDebut);   // ✅ maintenant c'est un LocalDate
-        p.setDateFin(dateFin);       // ✅ idem
-        p.setEtat(etat);
+       Projet p = new Projet();
+       saveProjetData(p, nomProjet, dateDebut, dateFin, chefProjetId, etat);
+       return "redirect:/projets";
+   }
 
-        if (chefProjetId != null) {
-            employeeRepository.findById(chefProjetId).ifPresent(p::setChefProjet);
-        }
+    //Modifier un projet
 
-        projetRepository.save(p);
+    @PostMapping("/projets/update")
+    public String updateProjet(@RequestParam Integer id,
+                               @RequestParam String nomProjet,
+                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
+                               @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
+                               @RequestParam(required = false) Integer chefProjetId,
+                               @RequestParam String etat) {
+
+        projetRepository.findById(id).ifPresent(p -> {
+            saveProjetData(p, nomProjet, dateDebut, dateFin, chefProjetId, etat);
+        });
         return "redirect:/projets";
     }
 
-    // Affecter un employé à un projet
+    //Eviter la répétition de code avec des copier-coller pour creer et modifier un projet
+
+    private void saveProjetData(Projet p, String nom, LocalDate debut, LocalDate fin, Integer chefId, String etat) {
+        p.setNomProjet(nom);
+        p.setDateDebut(debut);
+        p.setDateFin(fin);
+        p.setEtat(etat);
+
+        if (chefId != null) {
+            employeeRepository.findById(chefId).ifPresent(p::setChefProjet);
+        } else {
+            p.setChefProjet(null); // Important si on retire le chef
+        }
+        projetRepository.save(p);
+    }
+
+    // AFFECTER UN EMPLOYÉ 
     @PostMapping("/projets/assign")
     public String assignToProjet(@RequestParam int projetId,
                                  @RequestParam int empId) {
@@ -78,13 +106,31 @@ public class ProjetController {
 
         if (optP.isPresent() && optE.isPresent()) {
             Projet p = optP.get();
-            p.getEquipe().add(optE.get());
-            projetRepository.save(p);
+            Employee e = optE.get();
+            e.getProjets().add(p);
+            employeeRepository.save(e);
         }
 
         return "redirect:/projets?id=" + projetId;
     }
 
+    // RETIRER UN EMPLOYÉ 
+    @PostMapping("/projets/unassign")
+    public String unassignFromProjet(@RequestParam int projetId,
+                                     @RequestParam int empId) {
+        
+        Optional<Projet> optP = projetRepository.findById(projetId);
+        Optional<Employee> optE = employeeRepository.findById(empId);
+
+        if (optP.isPresent() && optE.isPresent()) {
+            Projet p = optP.get();
+            Employee e = optE.get();
+            e.getProjets().remove(p);
+            employeeRepository.save(e);
+        }
+        return "redirect:/projets?id=" + projetId;
+    }
+    
     // Supprimer un projet
     @PostMapping("/projets/delete")
     public String deleteProjet(@RequestParam int id) {
