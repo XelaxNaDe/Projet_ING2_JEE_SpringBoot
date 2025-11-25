@@ -1,18 +1,21 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.repository.DepartementRepository;
-import com.projet.gestion_rh.repository.EmployeeRepository;
-import com.projet.gestion_rh.repository.PayrollRepository;
-import com.projet.gestion_rh.repository.ProjetRepository;
-import jakarta.servlet.http.HttpSession;
+import java.util.Optional;
+
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Optional;
+import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.repository.DepartementRepository;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+import com.projet.gestion_rh.repository.PayrollRepository;
+import com.projet.gestion_rh.repository.ProjetRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class DashboardController {
@@ -22,12 +25,14 @@ public class DashboardController {
     private final EmployeeRepository employeeRepository;
     private final ProjetRepository projetRepository;
     private final PayrollRepository payrollRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public DashboardController(DepartementRepository dr, EmployeeRepository er, ProjetRepository pr, PayrollRepository payR) {
+    public DashboardController(DepartementRepository dr, EmployeeRepository er, ProjetRepository pr, PayrollRepository payR, PasswordEncoder passwordEncoder) {
         this.departementRepository = dr;
         this.employeeRepository = er;
         this.projetRepository = pr;
         this.payrollRepository = payR;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // AFFICHER LA PAGE DE LOGIN
@@ -49,10 +54,10 @@ public class DashboardController {
         if (empOpt.isPresent()) {
             Employee emp = empOpt.get();
             
-            if (emp.getPassword().equals(password)) {
-                System.out.println(" Mot de passe correct");
+            if (passwordEncoder.matches(password, emp.getPassword())) {
                 session.setAttribute("currentUser", emp);
-                return "redirect:/"; 
+                return "redirect:/";
+            
             } else {
                 System.out.println("Mot de passe incorrect");
             }

@@ -1,24 +1,30 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.repository.DepartementRepository;
-import com.projet.gestion_rh.repository.EmployeeRepository;
-import jakarta.servlet.http.HttpSession;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+    
+import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.repository.DepartementRepository;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+
+import jakarta.servlet.http.HttpSession;    
 
 @Controller
 public class EmployeeController {
 
     private final EmployeeRepository employeeRepository;
     private final DepartementRepository departementRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public EmployeeController(EmployeeRepository employeeRepository, DepartementRepository departementRepository) {
+    public EmployeeController(EmployeeRepository employeeRepository, DepartementRepository departementRepository, PasswordEncoder passwordEncoder) {
         this.employeeRepository = employeeRepository;
         this.departementRepository = departementRepository;
+        this.passwordEncoder = passwordEncoder;
+        
     }
 
     // LECTURE : Tout le monde connecté peut voir la liste
@@ -37,6 +43,7 @@ public class EmployeeController {
                               @RequestParam String sname,
                               @RequestParam(required = false) String gender,
                               @RequestParam String email,
+                              @RequestParam String password,
                               @RequestParam(required = false) String position,
                               @RequestParam(required = false) String grade,
                               @RequestParam(required = false) Integer departementId,
@@ -47,7 +54,8 @@ public class EmployeeController {
         if (user != null && user.hasRole("ADMINISTRATOR")) {
             Employee e = new Employee();
             e.setFname(fname); e.setSname(sname); e.setGender(gender);
-            e.setEmail(email); e.setPassword("password"); // Défaut
+            e.setEmail(email);
+            e.setPassword(passwordEncoder.encode(password));
             e.setPosition(position); e.setGrade(grade);
 
             if (departementId != null) {
