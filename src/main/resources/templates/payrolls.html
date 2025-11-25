@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des fiches de paie</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        a { text-decoration: none; color: #333; }
+        header { margin-bottom: 20px; }
+        h1 { margin-bottom: 5px; }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        th {
+            background: #333;
+            color: white;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        form { margin-bottom: 10px; }
+        label { margin-right: 5px; }
+        input, select { margin-right: 8px; margin-bottom: 5px; }
+        button { cursor: pointer; }
+        
+        .prime { color: green; font-weight: bold; }
+        .deduction { color: red; font-weight: bold; }
+
+        header { 
+            background: #333; 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center; 
+        }
+
+    /* Style du bouton déconnexion */
+        .logout-btn {
+            background-color: #e74c3c; 
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+    }
+
+        .logout-btn:hover {
+            background-color: #c0392b; 
+}
+    </style>
+</head>
+<body>
+
+<header>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
+        <h1 style="margin:0;">Gestion des fiches de paie</h1>
+    </div>
+
+    <a href="/logout" class="logout-btn">Se déconnecter</a>
+</header>
+
+<div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
+    <h2>Ajouter une fiche de paie</h2>
+    <form th:action="@{/payrolls/add}" method="post">
+        <label>Employé :</label>
+        <select name="empId" required>
+            <option value="" selected disabled>Choisir un employé</option>
+            <option th:each="e : ${employees}"
+                    th:value="${e.id}"
+                    th:text="${e.fname + ' ' + e.sname}">
+            </option>
+        </select>
+
+        <label>Date :</label>
+        <input type="date" name="date" required>
+
+        <label>Salaire brut :</label>
+        <input type="number" name="salary" step="0.01" required>
+
+        <button type="submit">Créer la fiche</button>
+    </form>
+</div>
+
+<div class="section">
+    <h2>Liste des fiches de paie</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Employé</th>
+            <th>Date</th>
+            <th>Salaire brut</th>
+            <th>Net à payer</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${payrolls}">
+            <td th:text="${p.idPayroll}"></td>
+            <td th:text="${p.employee != null ? p.employee.fname + ' ' + p.employee.sname : '—'}"></td>
+            <td th:text="${p.date}"></td>
+            <td th:text="${p.salary}"></td>
+            <td th:text="${p.netPay}" style="font-weight:bold;"></td>
+            <td>
+                <a th:href="@{/payrolls(id=${p.idPayroll})}">Voir détails</a>
+                
+                <span th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
+                    &nbsp;|&nbsp;
+                    <form th:action="@{/payrolls/delete}" method="post" style="display:inline;">
+                        <input type="hidden" name="id" th:value="${p.idPayroll}">
+                        <button type="submit" onclick="return confirm('Supprimer cette fiche de paie ?');" style="color:red;">
+                            Supprimer
+                        </button>
+                    </form>
+                </span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p th:if="${payrolls.empty}" style="color:gray; text-align:center;">Aucune fiche de paie trouvée.</p>
+</div>
+
+<div class="section" th:if="${selectedPayroll != null}">
+    <h2 th:text="'Détails de la fiche de paie n° ' + ${selectedPayroll.idPayroll}"></h2>
+    <p>
+        <strong>Employé :</strong>
+        <span th:text="${selectedPayroll.employee != null ? selectedPayroll.employee.fname + ' ' + selectedPayroll.employee.sname : '—'}"></span><br>
+        <strong>Date :</strong>
+        <span th:text="${selectedPayroll.date}"></span><br>
+        <strong>Salaire brut :</strong>
+        <span th:text="${selectedPayroll.salary}"></span> €<br>
+        <strong style="font-size:1.2em;">Net à payer :</strong>
+        <span th:text="${selectedPayroll.netPay}" style="font-size:1.2em; font-weight:bold;"></span> €
+    </p>
+
+    <div th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
+        <h3>Ajouter une ligne (prime ou déduction)</h3>
+        <form th:action="@{/payrolls/add-line}" method="post">
+            <input type="hidden" name="payrollId" th:value="${selectedPayroll.idPayroll}">
+
+            <label>Libellé :</label>
+            <input type="text" name="label" required>
+
+            <label>Montant :</label>
+            <input type="number" name="amount" step="0.01" required>
+
+            <label>Type :</label>
+            <select name="typeList" required>
+                <option value="Prime">Prime (+)</option>
+                <option value="Déduction">Déduction (-)</option>
+            </select>
+
+            <button type="submit">Ajouter la ligne</button>
+        </form>
+    </div>
+
+    <h3>Lignes associées</h3>
+    <table>
+        <thead>
+        <tr>
+            <th>Libellé</th>
+            <th>Montant</th>
+            <th>Type</th>
+            <th th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="l : ${lines}">
+            <td th:text="${l.label}"></td>
+            <td th:text="${l.amount}"></td>
+            <td th:text="${l.typeList}"
+                th:class="${l.typeList == 'Prime'} ? 'prime' : 'deduction'">
+            </td>
+
+            <td th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
+                <form th:action="@{/payrolls/delete-line}" method="post" style="display:inline;">
+                    <input type="hidden" name="lineId" th:value="${l.idLine}">
+                    <input type="hidden" name="payrollId" th:value="${selectedPayroll.idPayroll}">
+                    <button type="submit"
+                            onclick="return confirm('Supprimer cette ligne ?');"
+                            style="color:red;">
+                        Supprimer
+                    </button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p th:if="${lines.empty}" style="color:gray;">Aucune ligne de détail.</p>
+
+</div>
+
+</body>
+</html>
