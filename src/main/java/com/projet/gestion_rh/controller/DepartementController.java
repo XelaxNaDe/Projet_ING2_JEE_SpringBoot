@@ -1,18 +1,20 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Departement;
-import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.repository.DepartementRepository;
-import com.projet.gestion_rh.repository.EmployeeRepository;
-import jakarta.servlet.http.HttpSession;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-import java.util.Optional;
+import com.projet.gestion_rh.model.Departement;
+import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.repository.DepartementRepository;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class DepartementController {
@@ -29,10 +31,32 @@ public class DepartementController {
     private boolean canEditDept(Departement d, Employee user) {
         if (user.hasRole("ADMINISTRATOR")) return true;
         if (user.hasRole("HEADDEPARTEMENT")) {
-            // Attention: idChefDepartement est un Integer, on compare avec user.getId()
             return d.getIdChefDepartement() != null && d.getIdChefDepartement().equals(user.getId());
         }
         return false;
+    }
+
+    // Gère la sauvegarde et met à jour automatiquement l'employé Chef
+    private void saveDepartementData(Departement d, String nom, Integer idChef) {
+        d.setNomDepartement(nom);
+        d.setIdChefDepartement(idChef);
+        
+        // 1. On sauvegarde le département pour avoir son ID
+        Departement savedDept = departementRepository.save(d);
+
+        // 2. Si un chef est désigné, on l'affecte automatiquement au département
+        if (idChef != null) {
+            Optional<Employee> optChef = employeeRepository.findById(idChef);
+            if (optChef.isPresent()) {
+                Employee chef = optChef.get();
+                
+                // AUTOMATISME : Le chef rejoint son département
+                chef.setDepartement(savedDept);
+                
+                // On sauvegarde l'employé
+                employeeRepository.save(chef);
+            }
+        }
     }
 
     @GetMapping("/departements")
@@ -60,12 +84,13 @@ public class DepartementController {
     public String addDepartement(@RequestParam String nomDepartement,
                                  @RequestParam(required = false) Integer idChefDepartement,
                                  HttpSession session) {
+        
         Employee user = (Employee) session.getAttribute("currentUser");
+        
         if (user != null && user.hasRole("ADMINISTRATOR")) {
             Departement d = new Departement();
-            d.setNomDepartement(nomDepartement);
-            d.setIdChefDepartement(idChefDepartement);
-            departementRepository.save(d);
+            // Utilisation de la méthode intelligente ici !
+            saveDepartementData(d, nomDepartement, idChefDepartement);
         }
         return "redirect:/departements";
     }
@@ -75,6 +100,7 @@ public class DepartementController {
     public String assignEmployeeToDepartement(@RequestParam int deptId, 
                                               @RequestParam int empId,
                                               HttpSession session) {
+        
         Employee user = (Employee) session.getAttribute("currentUser");
         Optional<Departement> optDept = departementRepository.findById(deptId);
         Optional<Employee> optEmp = employeeRepository.findById(empId);

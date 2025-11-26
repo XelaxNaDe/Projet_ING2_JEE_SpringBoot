@@ -1,10 +1,8 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.model.Projet;
-import com.projet.gestion_rh.repository.EmployeeRepository;
-import com.projet.gestion_rh.repository.ProjetRepository;
-import jakarta.servlet.http.HttpSession;
+import java.time.LocalDate;
+import java.util.Optional;
+
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,8 +10,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
-import java.util.Optional;
+import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.model.Projet;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+import com.projet.gestion_rh.repository.ProjetRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class ProjetController {
@@ -112,12 +114,30 @@ public class ProjetController {
         p.setDateDebut(debut);
         p.setDateFin(fin);
         p.setEtat(etat);
+
+        Projet savedProjet = projetRepository.save(p);
+
         if (chefId != null) {
-            employeeRepository.findById(chefId).ifPresent(p::setChefProjet);
+            Optional<Employee> chefOptional = employeeRepository.findById(chefId);
+            
+            if (chefOptional.isPresent()) {
+                Employee chef = chefOptional.get();
+                
+                savedProjet.setChefProjet(chef);
+                projetRepository.save(savedProjet); // Mise à jour de la relation chef
+
+                boolean inTeam = chef.getProjets().stream()
+                        .anyMatch(proj -> proj.getIdProjet() == savedProjet.getIdProjet());
+
+                if (!inTeam) {
+                    chef.getProjets().add(savedProjet);
+                    employeeRepository.save(chef); 
+                }
+            }
         } else {
-            p.setChefProjet(null);
+            savedProjet.setChefProjet(null);
+            projetRepository.save(savedProjet);
         }
-        projetRepository.save(p);
     }
 
     // AFFECTATION (Admin ou Le Chef du projet)
@@ -131,6 +151,29 @@ public class ProjetController {
             if (canEditProject(optP.get(), user)) {
                 Employee e = optE.get();
                 e.getProjets().add(optP.get()); // MAJ relation ManyToMany
+                employeeRepository.save(e);
+            }
+        }
+        return "redirect:/projets?id=" + projetId;
+    }
+
+    // RETIRER UN MEMBRE (Admin ou Le Chef du projet)
+    @PostMapping("/projets/unassign")
+    public String unassignFromProjet(@RequestParam int projetId, 
+                                     @RequestParam int empId, 
+                                     HttpSession session) {
+        
+        Employee user = (Employee) session.getAttribute("currentUser");
+        Optional<Projet> optP = projetRepository.findById(projetId);
+        Optional<Employee> optE = employeeRepository.findById(empId);
+
+        if (user != null && optP.isPresent() && optE.isPresent()) {
+            // Vérification sécurité
+            if (canEditProject(optP.get(), user)) {
+                Employee e = optE.get();
+                // On retire le projet de la liste de l'employé
+                e.getProjets().remove(optP.get());
+                // On sauvegarde l'employé (propriétaire de la relation)
                 employeeRepository.save(e);
             }
         }
