@@ -28,16 +28,49 @@
             font-size: 14px;
         }
         a.button:hover { background: #555; }
+
+        header { 
+            background: #333; 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center; 
+        }
+
+    /* Style du bouton déconnexion */
+        .logout-btn {
+            background-color: #e74c3c; 
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+    }
+
+        .logout-btn:hover {
+            background-color: #c0392b; 
+}
     </style>
 </head>
 <body>
 
 <header>
     <h1>Dashboard - Gestion RH & Paie</h1>
+
+    <div>
+        <a href="/profile" style="background-color: #f39c12; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px;">
+            Mon Profil
+        </a>
+        
+        <a href="/logout" class="logout-btn">Se déconnecter</a>
+    </div>
 </header>
 
 <main>
-    <p>Bienvenue dans l'application de gestion des ressources humaines et de la paie.</p>
+    <p>Bienvenue dans l'application de gestion des ressources humaines.</p>
 
     <div class="cards">
         <div class="card">

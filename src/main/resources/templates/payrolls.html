@@ -45,13 +45,48 @@
         
         .prime { color: green; font-weight: bold; }
         .deduction { color: red; font-weight: bold; }
+
+        header { 
+            background: #333; 
+            color: white; 
+            padding: 15px 30px; 
+            display: flex; 
+            justify-content: space-between;
+            align-items: center; 
+        }
+
+    /* Style du bouton déconnexion */
+        .logout-btn {
+            background-color: #e74c3c; 
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+    }
+
+        .logout-btn:hover {
+            background-color: #c0392b; 
+}
     </style>
 </head>
 <body>
 
 <header>
-    <a th:href="@{/}">&larr; Retour au dashboard</a>
-    <h1>Gestion des fiches de paie</h1>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
+        <h1 style="margin:0;">Gestion des fiches de paie</h1>
+    </div>
+
+    <div>
+        <a href="/profile" style="background-color: #f39c12; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px;">
+            Mon Profil
+        </a>
+        
+        <a href="/logout" class="logout-btn">Se déconnecter</a>
+    </div>
 </header>
 
 <div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">

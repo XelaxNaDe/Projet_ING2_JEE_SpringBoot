@@ -1,11 +1,21 @@
 package com.projet.gestion_rh.model;
 
-import com.projet.gestion_rh.model.utils.IntStringPayroll;
-import jakarta.persistence.*;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.projet.gestion_rh.model.utils.IntStringPayroll;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "Payroll")
@@ -27,7 +37,7 @@ public class Payroll {
     @Column(nullable = false)
     private int salary;
 
-    @Column(name = "net_Pay", nullable = false)
+    @Column(name = "net_pay", nullable = false)
     private double netPay = 0.0;
 
     // Liste des primes/déductions (OneToMany)

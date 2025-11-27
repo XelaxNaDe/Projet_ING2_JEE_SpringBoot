@@ -13,17 +13,55 @@
         tr:nth-child(even) { background-color: #f2f2f2; }
         .section { margin-bottom: 30px; padding: 15px; box-shadow: 0 0 5px rgba(0,0,0,0.1); background: white; }
         form { margin-bottom: 10px; }
-        label { margin-right: 5px; }
+        label { margin-right: 5px; display:inline-block; margin-top:5px; }
+        input, select { margin-right: 10px; margin-top:5px; }
         button { cursor: pointer; }
+
+        header {
+            background: #333;
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <a th:href="@{/}">&larr; Retour au dashboard</a>
-    <h1>Gestion des employés</h1>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
+        <h1 style="margin:0;">Gestion des employés</h1>
+    </div>
+
+    <div>
+        <a href="/profile"
+           style="background-color: #f39c12; color: white; text-decoration: none;
+                  padding: 8px 15px; border-radius: 5px; margin-right: 10px;">
+            Mon Profil
+        </a>
+
+        <a href="/logout" class="logout-btn">Se déconnecter</a>
+    </div>
 </header>
 
+<!-- Ajout d'un employé : visible seulement pour l'ADMIN -->
 <div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
     <h2>Ajouter un employé</h2>
     <form th:action="@{/employees/add}" method="post">
@@ -39,26 +77,54 @@
         <label>Email :</label>
         <input type="email" name="email" required>
 
+        <label>Mot de passe :</label>
+        <input type="password" name="password" placeholder="Mot de passe" required>
+
         <label>Poste :</label>
         <input type="text" name="position">
-
-        <label>Grade :</label>
-        <input type="text" name="grade">
 
         <label>Département :</label>
         <select name="departementId">
             <option value="" selected>— Aucun —</option>
             <option th:each="d : ${departements}"
                     th:value="${d.idDepartement}"
-                    th:text="${d.nomDepartement}"></option>
+                    th:text="${d.nomDepartement}">
+            </option>
         </select>
 
         <button type="submit">Ajouter</button>
     </form>
 </div>
 
+<!-- Liste des employés -->
 <div class="section">
     <h2>Liste des employés</h2>
+
+    <!-- 🔎 Formulaire de recherche -->
+    <form th:action="@{/employees}" method="get" style="margin-bottom:15px;">
+        <label>Prénom :</label>
+        <input type="text" name="fname" th:value="${fname}">
+
+        <label>Nom :</label>
+        <input type="text" name="sname" th:value="${sname}">
+
+        <label>Poste :</label>
+        <input type="text" name="position" th:value="${position}">
+
+        <label>Département :</label>
+        <select name="departementId">
+            <option value="">— Tous —</option>
+            <option th:each="d : ${departements}"
+                    th:value="${d.idDepartement}"
+                    th:text="${d.nomDepartement}"
+                    th:selected="${departementId != null and departementId == d.idDepartement}">
+            </option>
+        </select>
+
+        <button type="submit">Rechercher</button>
+        <a th:href="@{/employees}" style="margin-left:10px;">Réinitialiser</a>
+    </form>
+
     <table>
         <thead>
         <tr>
@@ -68,36 +134,58 @@
             <th>Genre</th>
             <th>Email</th>
             <th>Poste</th>
-            <th>Grade</th>
             <th>Département</th>
             <th>Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="e : ${employees}">
-            <td th:text="${e.id}"></td>
-            <td th:text="${e.fname}"></td>
-            <td th:text="${e.sname}"></td>
-            <td th:text="${e.gender}"></td>
-            <td th:text="${e.email}"></td>
-            <td th:text="${e.position}"></td>
-            <td th:text="${e.grade}"></td>
-            <td th:text="${e.departement != null ? e.departement.nomDepartement : '—'}"></td>
+        <tr th:each="employee : ${employees}">
+            <td th:text="${employee.id}"></td>
+            <td th:text="${employee.fname}"></td>
+            <td th:text="${employee.sname}"></td>
+            <td th:text="${employee.gender}"></td>
+            <td th:text="${employee.email}"></td>
+            <td th:text="${employee.position}"></td>
+            <td th:text="${employee.departement != null ?
+                          employee.departement.nomDepartement : '—'}"></td>
             <td>
-                <form th:if="${session.currentUser.hasRole('ADMINISTRATOR')}" 
+                <!-- Bouton Modifier pour ADMIN -->
+                <a th:if="${session.currentUser.hasRole('ADMINISTRATOR')}"
+                   th:href="@{/employees/edit(id=${employee.id})}"
+                   style="background-color:#3498db;
+                          color:white;
+                          padding:5px 10px;
+                          border-radius:3px;
+                          margin-right:5px;
+                          display:inline-block;">
+                    Modifier
+                </a>
+
+                <!-- Bouton Supprimer pour ADMIN -->
+                <form th:if="${session.currentUser.hasRole('ADMINISTRATOR')}"
                       th:action="@{/employees/delete}" method="post" style="display:inline;">
-                    <input type="hidden" name="id" th:value="${e.id}">
-                    <button type="submit" onclick="return confirm('Supprimer cet employé ?');" style="background-color: #e74c3c; color: white; border:none; padding:5px;">
+                    <input type="hidden" name="id" th:value="${employee.id}">
+                    <button type="submit"
+                            onclick="return confirm('Supprimer cet employé ?');"
+                            style="background-color: #e74c3c;
+                                   color: white;
+                                   border:none;
+                                   padding:5px 10px;">
                         Supprimer
                     </button>
                 </form>
-                
-                <span th:unless="${session.currentUser.hasRole('ADMINISTRATOR')}" style="color:gray;">👁️</span>
+
+                <!-- Si pas admin : aucune action -->
+                <span th:unless="${session.currentUser.hasRole('ADMINISTRATOR')}"
+                      style="color:gray;">
+                    👁️
+                </span>
             </td>
         </tr>
         </tbody>
     </table>
 </div>
+
 
 </body>
 </html>

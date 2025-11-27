@@ -23,7 +23,6 @@ public class Employee {
     
     private String password;
     private String position;
-    private String grade;
 
     // Relation vers Departement (Clé étrangère id_departement)
     @ManyToOne
@@ -80,8 +79,6 @@ public class Employee {
     public void setPassword(String password) { this.password = password; }
     public String getPosition() { return position; }
     public void setPosition(String position) { this.position = position; }
-    public String getGrade() { return grade; }
-    public void setGrade(String grade) { this.grade = grade; }
     
     public Departement getDepartement() { return departement; }
     public void setDepartement(Departement departement) { this.departement = departement; }
