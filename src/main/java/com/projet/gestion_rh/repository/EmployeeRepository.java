@@ -1,17 +1,19 @@
 package com.projet.gestion_rh.repository;
 
-import com.projet.gestion_rh.model.Departement;
-import com.projet.gestion_rh.model.Employee;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
+import com.projet.gestion_rh.model.Departement;
+import com.projet.gestion_rh.model.Employee;
 
 // <Employee, Integer> car l'ID de Employee est un 'int'
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
+    
     // Pour le Login
     Optional<Employee> findByEmail(String email);
 
@@ -33,4 +35,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
             @Param("position") String position,
             @Param("departementId") Integer departementId
     );
+
 }

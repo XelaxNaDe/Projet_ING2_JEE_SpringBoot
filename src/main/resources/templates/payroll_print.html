@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Fiche de Paie</title>
+    <style>
+        /* Style format A4 pour l'impression */
+        body { font-family: 'Courier New', Courier, monospace; margin: 40px; color: black; }
+        .header { text-align: center; border-bottom: 2px solid black; padding-bottom: 20px; margin-bottom: 30px; }
+        .company-info { float: left; }
+        .doc-title { float: right; font-weight: bold; font-size: 1.5em; }
+        .clearfix::after { content: ""; clear: both; display: table; }
+        
+        .employee-section { margin-bottom: 30px; padding: 10px; border: 1px solid #ccc; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 10px; text-align: left; }
+        th { background-color: #f0f0f0; }
+        
+        .total-section { margin-top: 30px; text-align: right; font-size: 1.2em; }
+        .net-box { border: 2px solid black; padding: 10px; display: inline-block; font-weight: bold; }
+        
+        .footer { margin-top: 50px; font-size: 0.8em; text-align: center; border-top: 1px solid gray; padding-top: 10px; }
+
+        /* Cacher le bouton imprimer sur le papier */
+        @media print {
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <button onclick="window.print()" class="no-print" style="margin-bottom:20px; padding:10px; cursor:pointer;">🖨️ Imprimer cette fiche</button>
+
+    <div class="header clearfix">
+        <div class="company-info">
+            <strong>ENTREPRISE CY-TECH</strong><br>
+            Service Ressources Humaines<br>
+            Paris, France
+        </div>
+        <div class="doc-title">BULLETIN DE PAIE</div>
+    </div>
+
+    <div class="employee-section">
+        <p><strong>Matricule :</strong> <span th:text="${payroll.employee.id}"></span></p>
+        <p><strong>Nom Prénom :</strong> <span th:text="${payroll.employee.fname + ' ' + payroll.employee.sname}"></span></p>
+        <p><strong>Poste :</strong> <span th:text="${payroll.employee.position}"></span></p>
+        <p><strong>Période :</strong> <span th:text="${payroll.date}"></span></p>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Désignation</th>
+                <th>Type</th>
+                <th>Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Salaire de Base</td>
+                <td>Brut</td>
+                <td th:text="${payroll.salary} + ' €'"></td>
+            </tr>
+            <tr th:each="line : ${lines}">
+                <td th:text="${line.label}"></td>
+                <td th:text="${line.typeList}"></td>
+                <td th:text="${line.typeList == 'Déduction' ? '-' : '+'} + ' ' + ${line.amount} + ' €'"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="total-section">
+        <div class="net-box">
+            NET À PAYER : <span th:text="${payroll.netPay}"></span> €
+        </div>
+    </div>
+
+    <div class="footer">
+        Pour faire valoir ce que de droit. Document généré automatiquement le <span th:text="${#dates.format(#dates.createNow(), 'dd/MM/yyyy')}"></span>.
+    </div>
+
+    <script>
+        window.onload = function() { window.print(); }
+    </script>
+</body>
+</html>

@@ -96,6 +96,13 @@
             <p th:text="|Nombre de fiches de paie : ${payrollCount}|"></p>
             <a class="button" th:href="@{/payrolls}">Gérer les fiches de paie</a>
         </div>
+
+        <div class="card" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
+            <h2>Statistiques</h2>
+            <p>Vues d'ensemble</p>
+            <a class="button" href="/statistics">Voir les rapports</a>
+        </div>
+
     </div>
 </main>
 

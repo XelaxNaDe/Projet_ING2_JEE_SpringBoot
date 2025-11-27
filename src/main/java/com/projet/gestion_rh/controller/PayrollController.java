@@ -1,21 +1,23 @@
 package com.projet.gestion_rh.controller;
 
-import com.projet.gestion_rh.model.Employee;
-import com.projet.gestion_rh.model.Payroll;
-import com.projet.gestion_rh.model.utils.IntStringPayroll;
-import com.projet.gestion_rh.repository.EmployeeRepository;
-import com.projet.gestion_rh.repository.IntStringPayrollRepository;
-import com.projet.gestion_rh.repository.PayrollRepository;
-import jakarta.servlet.http.HttpSession;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import com.projet.gestion_rh.model.Employee;
+import com.projet.gestion_rh.model.Payroll;
+import com.projet.gestion_rh.model.utils.IntStringPayroll;
+import com.projet.gestion_rh.repository.EmployeeRepository;
+import com.projet.gestion_rh.repository.IntStringPayrollRepository;
+import com.projet.gestion_rh.repository.PayrollRepository;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class PayrollController {
@@ -180,5 +182,24 @@ public class PayrollController {
             payrollRepository.deleteById(id);
         }
         return "redirect:/payrolls";
+    }
+
+    @GetMapping("/payrolls/print")
+    public String printPayroll(@RequestParam int id, Model model, HttpSession session) {
+        Employee user = (Employee) session.getAttribute("currentUser");
+        if (user == null) return "redirect:/login";
+
+        Optional<Payroll> opt = payrollRepository.findById(id);
+        if (opt.isPresent()) {
+            Payroll p = opt.get();
+            
+            // SÉCURITÉ : On vérifie que c'est bien ma fiche ou que je suis Admin
+            if (user.hasRole("ADMINISTRATOR") || p.getEmployee().getId() == user.getId()) {
+                model.addAttribute("payroll", p);
+                model.addAttribute("lines", p.getLines()); // ou getDetails() selon votre modèle
+                return "payroll_print"; // Renvoie vers payroll_print.html
+            }
+        }
+        return "redirect:/payrolls"; // Retour liste si erreur ou fraude
     }
 }
