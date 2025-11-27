@@ -1,4 +1,4 @@
-package com.projet.gestion_rh;
+package com.projet.gestion_rh.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

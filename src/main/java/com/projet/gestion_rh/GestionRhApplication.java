@@ -13,7 +13,15 @@ import com.projet.gestion_rh.model.Employee;
 import com.projet.gestion_rh.repository.EmployeeRepository;
 
 @SpringBootApplication
-@ComponentScan(basePackages = "com.projet")
+@ComponentScan(basePackages = {
+    "com.projet.gestion_rh",
+    "com.projet.gestion_rh.controller",
+    "com.projet.gestion_rh.repository",
+    "com.projet.gestion_rh.service",
+    "com.projet.gestion_rh.config"
+})
+
+
 public class GestionRhApplication {
 
     public static void main(String[] args) {

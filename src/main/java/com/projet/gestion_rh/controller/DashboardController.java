@@ -26,6 +26,7 @@ public class DashboardController {
     private final ProjetRepository projetRepository;
     private final PayrollRepository payrollRepository;
     private final PasswordEncoder passwordEncoder;
+    
 
     public DashboardController(DepartementRepository dr, EmployeeRepository er, ProjetRepository pr, PayrollRepository payR, PasswordEncoder passwordEncoder) {
         this.departementRepository = dr;
@@ -91,5 +92,64 @@ public class DashboardController {
         model.addAttribute("payrollCount", payrollRepository.count());
         
         return "dashboard"; // Cherche src/main/resources/templates/dashboard.html
+    }
+
+    // 1. Afficher la page Profil
+    @GetMapping("/profile")
+    public String showProfile(HttpSession session, Model model) {
+        Employee currentUser = (Employee) session.getAttribute("currentUser");
+        if (currentUser == null) return "redirect:/login";
+
+        // On recharge les données depuis la BDD pour être sûr d'avoir la version à jour
+        Optional<Employee> empOpt = employeeRepository.findById(currentUser.getId());
+        if (empOpt.isPresent()) {
+            model.addAttribute("employee", empOpt.get());
+            return "profile"; // Cherche profile.html
+        }
+        
+        return "redirect:/login";
+    }
+
+    // 2. Traiter la mise à jour
+    @PostMapping("/profile/update")
+    public String updateProfile(@RequestParam String email,
+                                @RequestParam(required = false) String password,
+                                HttpSession session,
+                                Model model) {
+
+        Employee currentUser = (Employee) session.getAttribute("currentUser");
+        if (currentUser == null) return "redirect:/login";
+
+        // On récupère l'employé réel en base
+        Employee empToUpdate = employeeRepository.findById(currentUser.getId()).orElse(null);
+        if (empToUpdate == null) return "redirect:/login";
+
+        // --- Vérification Email Unique ---
+        // Si l'email change, on vérifie qu'il n'est pas déjà pris par un autre employé
+        if (!email.equals(empToUpdate.getEmail())) {
+            Optional<Employee> existing = employeeRepository.findByEmail(email);
+            if (existing.isPresent()) {
+                model.addAttribute("error", "Email deja utilisé");
+                model.addAttribute("employee", empToUpdate);
+                return "profile";
+            }
+            empToUpdate.setEmail(email);
+        }
+
+        // --- Changement de mot de passe si rempli ---
+        if (password != null && !password.isBlank()) {
+            empToUpdate.setPassword(passwordEncoder.encode(password));
+        }
+
+        // Sauvegarde
+        employeeRepository.save(empToUpdate);
+
+        // On met à jour la session avec les nouvelles infos
+        session.setAttribute("currentUser", empToUpdate);
+
+        model.addAttribute("success", "Profil mis à jour");
+        model.addAttribute("employee", empToUpdate);
+        
+        return "profile";
     }
 }

@@ -49,8 +49,14 @@
         <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
         <h1 style="margin:0;">Gestion des employés</h1>
     </div>
-
-    <a href="/logout" class="logout-btn">Se déconnecter</a>
+    
+    <div>
+        <a href="/profile" style="background-color: #f39c12; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px;">
+            Mon Profil
+        </a>
+        
+        <a href="/logout" class="logout-btn">Se déconnecter</a>
+    </div>
 </header>
 
 <div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
