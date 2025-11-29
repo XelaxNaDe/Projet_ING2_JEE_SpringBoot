@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Gestion des départements</title>
+
+    <style>
+        body { font-family: Arial; margin:0; background: #f5f5f5; }
+        header { background: #333; color: white; padding: 15px; display:flex; justify-content:space-between; align-items: center;  }
+        table { width:100%; border-collapse: collapse; background:white; margin-top:10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #333; color:white; }
+        .section { background:white; padding:15px; margin-bottom:20px; box-shadow:0 0 5px rgba(0,0,0,0.1); }
+        button { cursor:pointer; }
+        .logout-btn {
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b; 
+}
+    </style>
+</head>
+
+<body>
+
+<header>
+    <div style="display:flex; align-items:center; gap:15px;">
+        <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
+        <h1 style="margin:0;">Gestion des départements</h1>
+    </div>
+
+    <div>
+        <a href="/profile" style="background-color: #f39c12; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px;">
+            Mon Profil
+        </a>
+        
+        <a href="/logout" class="logout-btn">Se déconnecter</a>
+    </div>
+</header>
+
+
+<!-- AJOUT DÉPARTEMENT (ADMIN) -->
+<div class="section" th:if="${isAdmin}">
+    <h3>Ajouter un département</h3>
+
+    <form th:action="@{/departements/add}" method="post">
+        <label>Nom :</label>
+        <input type="text" name="nomDepartement" required>
+
+        <label>Chef (ID) :</label>
+        <input type="number" name="idChefDepartement">
+
+        <button type="submit">Ajouter</button>
+    </form>
+</div>
+
+<!-- ASSIGNATION -->
+<div class="section" th:if="${isHeadOrAdmin}">
+    <h3>Affecter un employé</h3>
+
+    <form th:action="@{/departements/assign}" method="post">
+
+        <label>Département :</label>
+        <select name="deptId" required>
+            <option th:each="d : ${departements}"
+                    th:value="${d.idDepartement}"
+                    th:text="${d.nomDepartement}"></option>
+        </select>
+
+        <label>Employé :</label>
+        <select name="empId" required>
+            <option th:each="e : ${employees}"
+                    th:value="${e.id}"
+                    th:text="${e.fname + ' ' + e.sname}"></option>
+        </select>
+
+        <button type="submit">Affecter</button>
+    </form>
+</div>
+
+
+<!-- LISTE DES DÉPARTEMENTS -->
+<div class="section">
+    <h3>Liste des départements</h3>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>ID Chef</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="d : ${departements}">
+            <td th:text="${d.idDepartement}"></td>
+            <td th:text="${d.nomDepartement}"></td>
+            <td th:text="${d.idChefDepartement}"></td>
+
+            <td>
+                <!-- Voir les membres -->
+                <a th:href="@{/departements(selectedDeptId=${d.idDepartement})}">
+                    Voir les membres
+                </a>
+
+                <!-- Supprimer : uniquement ADMIN -->
+                <form th:if="${isAdmin}"
+                      th:action="@{/departements/delete}"
+                      method="post"
+                      style="display:inline; margin-left:10px;">
+                    <input type="hidden" name="deptId" th:value="${d.idDepartement}">
+                    <button type="submit" style="background:none; border:none; color:red; cursor:pointer;">
+                        Supprimer
+                    </button>
+                </form>
+            </td>
+
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- MEMBRES DU DEPARTEMENT SÉLECTIONNÉ -->
+<div class="section" th:if="${selectedDepartement != null}">
+    <h3 th:text="${'Membres du département : ' + selectedDepartement.nomDepartement}"></h3>
+
+    <table th:if="${members != null}">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Prénom</th>
+            <th>Nom</th>
+            <th>Email</th>
+            <th>Poste</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="m : ${members}">
+            <td th:text="${m.id}"></td>
+            <td th:text="${m.fname}"></td>
+            <td th:text="${m.sname}"></td>
+            <td th:text="${m.email}"></td>
+            <td th:text="${m.position}"></td>
+
+            <td th:if="${canManageSelectedDept}">
+                <form th:action="@{/departements/removeMember}" method="post" style="margin:0;">
+                    <input type="hidden" name="empId" th:value="${m.id}">
+                    <input type="hidden" name="deptId" th:value="${selectedDepartement.idDepartement}">
+                    <button type="submit" style="color:red; background:none; border:none; cursor:pointer;">
+                        Retirer
+                    </button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- CHANGEMENT DE CHEF -->
+    <div th:if="${isHeadOrAdmin}">
+        <h3>Changer le chef du département</h3>
+
+        <form th:action="@{/departements/setChief}" method="post">
+            <input type="hidden" name="deptId" th:value="${selectedDepartement.idDepartement}">
+
+            <label>Nouveau chef :</label>
+            <select name="idChefDepartement" required>
+                <option th:each="m : ${members}" th:value="${m.id}"
+                        th:text="${m.fname + ' ' + m.sname}">
+                </option>
+            </select>
+
+            <button type="submit">Définir</button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

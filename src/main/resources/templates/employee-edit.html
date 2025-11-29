@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier un employé</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { background:white; padding:20px; max-width:600px; margin:0 auto; box-shadow:0 0 5px rgba(0,0,0,0.1); }
+        label { display:block; margin-top:10px; }
+        input, select { width:100%; padding:6px; margin-top:3px; }
+        button { margin-top:15px; padding:8px 15px; cursor:pointer; }
+        a { text-decoration:none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Modifier un employé</h1>
+
+    <form th:action="@{/employees/update}" method="post">
+        <input type="hidden" name="id" th:value="${employee.id}" />
+
+        <label>Prénom :</label>
+        <input type="text" name="fname" th:value="${employee.fname}" required>
+
+        <label>Nom :</label>
+        <input type="text" name="sname" th:value="${employee.sname}" required>
+
+        <label>Genre :</label>
+        <select class="form-control" id="gender" name="gender">
+            <option value="M" th:selected="${employee.gender == 'M'}">M</option>
+            <option value="F" th:selected="${employee.gender == 'F'}">F</option>
+        </select>
+
+        <label>Email :</label>
+        <input type="email" name="email" th:value="${employee.email}" required>
+
+        <label>Poste :</label>
+        <input type="text" name="position" th:value="${employee.position}">
+
+        <label>Département :</label>
+        <select name="departementId">
+            <option value="">— Aucun —</option>
+            <option th:each="d : ${departements}"
+                    th:value="${d.idDepartement}"
+                    th:text="${d.nomDepartement}"
+                    th:selected="${employee.departement != null} ? ${employee.departement.idDepartement} == ${d.idDepartement} : false">
+            </option>
+        </select>
+
+        <button type="submit">Enregistrer</button>
+        <a th:href="@{/employees}" style="margin-left:10px;">Annuler</a>
+    </form>
+</div>
+
+</body>
+</html>
