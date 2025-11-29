@@ -11,7 +11,10 @@ import com.projet.gestion_rh.model.Employee;
 import com.projet.gestion_rh.repository.DepartementRepository;
 import com.projet.gestion_rh.repository.EmployeeRepository;
 
-import jakarta.servlet.http.HttpSession;    
+import jakarta.servlet.http.HttpSession;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.Optional;
 
 @Controller
 public class EmployeeController {
@@ -50,10 +53,8 @@ public class EmployeeController {
             model.addAttribute("employees", employeeRepository.findAll());
         }
 
-        // Liste des départements (pour ajout + filtre)
         model.addAttribute("departements", departementRepository.findAll());
 
-        // Pour re-remplir le formulaire de recherche
         model.addAttribute("fname", fname);
         model.addAttribute("sname", sname);
         model.addAttribute("position", position);
@@ -83,40 +84,59 @@ public class EmployeeController {
     }
 
     @PostMapping("/employees/update")
-    public String updateEmployee(@RequestParam int id,
+    public String updateEmployee(@RequestParam Integer id,
                                  @RequestParam String fname,
                                  @RequestParam String sname,
                                  @RequestParam(required = false) String gender,
                                  @RequestParam String email,
                                  @RequestParam(required = false) String position,
                                  @RequestParam(required = false) Integer departementId,
-                                 HttpSession session) {
+                                 HttpSession session,
+                                 RedirectAttributes redirectAttributes) {
 
         Employee user = (Employee) session.getAttribute("currentUser");
-        if (user == null || !user.hasRole("ADMINISTRATOR")) {
-            return "redirect:/employees";
+
+        if (user != null && user.hasRole("ADMINISTRATOR")) {
+
+            Optional<Employee> opt = employeeRepository.findById(id);
+            if (opt.isEmpty()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "Employé introuvable.");
+                return "redirect:/employees";
+            }
+
+            Employee e = opt.get();
+
+            // Vérifier si l’email est déjà utilisé
+            Optional<Employee> existing = employeeRepository.findByEmail(email);
+            if (existing.isPresent() && existing.get().getId() != id){
+                redirectAttributes.addFlashAttribute(
+                        "errorMessage",
+                        "Impossible de modifier : cet email est déjà utilisé par un autre employé."
+                );
+                return "redirect:/employees";
+            }
+
+            // l'email est soit libre, soit c'est le même employé
+            e.setFname(fname);
+            e.setSname(sname);
+            e.setGender(gender);
+            e.setEmail(email);
+            e.setPosition(position);
+
+            if (departementId != null) {
+                departementRepository.findById(departementId).ifPresent(e::setDepartement);
+            } else {
+                e.setDepartement(null);
+            }
+
+            employeeRepository.save(e);
+
+            redirectAttributes.addFlashAttribute("successMessage", "Employé modifié avec succès !");
         }
 
-        Employee e = employeeRepository.findById(id).orElse(null);
-        if (e == null) {
-            return "redirect:/employees";
-        }
-
-        e.setFname(fname);
-        e.setSname(sname);
-        e.setGender(gender);
-        e.setEmail(email);
-        e.setPosition(position);
-
-        if (departementId != null) {
-            departementRepository.findById(departementId).ifPresent(e::setDepartement);
-        } else {
-            e.setDepartement(null);
-        }
-
-        employeeRepository.save(e);
         return "redirect:/employees";
     }
+
 
 
 
@@ -130,15 +150,29 @@ public class EmployeeController {
                               @RequestParam String password,
                               @RequestParam(required = false) String position,
                               @RequestParam(required = false) Integer departementId,
-                              HttpSession session) {
+                              HttpSession session,
+                              RedirectAttributes redirectAttributes) {
         
         Employee user = (Employee) session.getAttribute("currentUser");
         
         if (user != null && user.hasRole("ADMINISTRATOR")) {
+
+            if (employeeRepository.findByEmail(email).isPresent()) {
+
+                redirectAttributes.addFlashAttribute(
+                        "errorMessage",
+                        "Un employé avec cet email existe déjà."
+                );
+
+                return "redirect:/employees";
+            }
+
             Employee e = new Employee();
             e.setFname(fname); e.setSname(sname); e.setGender(gender);
             e.setEmail(email);
             e.setPassword(passwordEncoder.encode(password));
+            e.setPosition(position);
+
 
             if (departementId != null) {
                 departementRepository.findById(departementId).ifPresent(e::setDepartement);

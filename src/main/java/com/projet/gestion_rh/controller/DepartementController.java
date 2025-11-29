@@ -27,91 +27,178 @@ public class DepartementController {
         this.employeeRepository = employeeRepository;
     }
 
-    // Sécurité : Vérifie si c'est le chef du département ou un admin
-    private boolean canEditDept(Departement d, Employee user) {
-        if (user.hasRole("ADMINISTRATOR")) return true;
-        if (user.hasRole("HEADDEPARTEMENT")) {
-            return d.getIdChefDepartement() != null && d.getIdChefDepartement().equals(user.getId());
-        }
-        return false;
+    private boolean isDeptChief(Departement d, Employee user) {
+        return d.getIdChefDepartement() != null
+                && d.getIdChefDepartement().equals(user.getId());
     }
 
-    // Gère la sauvegarde et met à jour automatiquement l'employé Chef
+    private boolean canEditDept(Departement d, Employee user) {
+        // ADMIN peut tout
+        if (user.hasRole("ADMINISTRATOR")) return true;
+
+        // Chef identifié par id_chef_departement (pas besoin de rôle HEADDEPARTEMENT)
+        return isDeptChief(d, user);
+    }
+
+
+    // Fonction pour sauvegarder le département + assigner le chef
     private void saveDepartementData(Departement d, String nom, Integer idChef) {
         d.setNomDepartement(nom);
         d.setIdChefDepartement(idChef);
-        
-        // 1. On sauvegarde le département pour avoir son ID
+
         Departement savedDept = departementRepository.save(d);
 
-        // 2. Si un chef est désigné, on l'affecte automatiquement au département
         if (idChef != null) {
             Optional<Employee> optChef = employeeRepository.findById(idChef);
             if (optChef.isPresent()) {
                 Employee chef = optChef.get();
-                
-                // AUTOMATISME : Le chef rejoint son département
                 chef.setDepartement(savedDept);
-                
-                // On sauvegarde l'employé
                 employeeRepository.save(chef);
             }
         }
     }
 
+    // PAGE PRINCIPALE
     @GetMapping("/departements")
-    public String departements(@RequestParam(name = "selectedDeptId", required = false) Integer selectedDeptId,
-                               Model model, HttpSession session) {
-        if (session.getAttribute("currentUser") == null) return "redirect:/login";
+    public String departements(
+            @RequestParam(name = "selectedDeptId", required = false) Integer selectedDeptId,
+            Model model, HttpSession session) {
+
+        Employee currentUser = (Employee) session.getAttribute("currentUser");
+        if (currentUser == null) return "redirect:/login";
+
+        boolean isAdmin = currentUser.hasRole("ADMINISTRATOR");
+        model.addAttribute("isAdmin", isAdmin);
 
         model.addAttribute("departements", departementRepository.findAll());
         model.addAttribute("employees", employeeRepository.findAll());
+
+        model.addAttribute("selectedDepartement", null);
+        model.addAttribute("members", List.of());
+        model.addAttribute("canManageSelectedDept", false); // par défaut
 
         if (selectedDeptId != null) {
             Optional<Departement> optDept = departementRepository.findById(selectedDeptId);
             if (optDept.isPresent()) {
                 Departement d = optDept.get();
                 List<Employee> members = employeeRepository.findByDepartement(d);
+                if (members == null) members = List.of();
+
+                boolean canManage = canEditDept(d, currentUser); // admin OU chef de ce département
+
                 model.addAttribute("selectedDepartement", d);
                 model.addAttribute("members", members);
+                model.addAttribute("canManageSelectedDept", canManage);
             }
         }
+
         return "departements";
     }
 
-    // Ajouter : Seulement ADMIN
+    // AJOUTER UN DEPARTEMENT (ADMIN)
     @PostMapping("/departements/add")
     public String addDepartement(@RequestParam String nomDepartement,
                                  @RequestParam(required = false) Integer idChefDepartement,
                                  HttpSession session) {
-        
+
         Employee user = (Employee) session.getAttribute("currentUser");
-        
+
         if (user != null && user.hasRole("ADMINISTRATOR")) {
             Departement d = new Departement();
-            // Utilisation de la méthode intelligente ici !
             saveDepartementData(d, nomDepartement, idChefDepartement);
         }
         return "redirect:/departements";
     }
 
-    // Assigner employé : ADMIN ou CHEF DU DEPARTEMENT concerné
+    @PostMapping("/departements/delete")
+    public String deleteDepartement(@RequestParam int deptId, HttpSession session) {
+
+        Employee user = (Employee) session.getAttribute("currentUser");
+        Optional<Departement> optDept = departementRepository.findById(deptId);
+
+        if (user != null && user.hasRole("ADMINISTRATOR") && optDept.isPresent()) {
+            Departement d = optDept.get();
+
+            // 1. Détacher tous les employés de ce département
+            List<Employee> members = employeeRepository.findByDepartement(d);
+            for (Employee emp : members) {
+                emp.setDepartement(null);
+                employeeRepository.save(emp);
+            }
+
+            // 2. Supprimer le département
+            departementRepository.delete(d);
+        }
+
+        return "redirect:/departements";
+    }
+
+
+
+    // ASSIGNER EMPLOYE A UN DEPARTEMENT
     @PostMapping("/departements/assign")
-    public String assignEmployeeToDepartement(@RequestParam int deptId, 
+    public String assignEmployeeToDepartement(@RequestParam int deptId,
                                               @RequestParam int empId,
                                               HttpSession session) {
-        
+
         Employee user = (Employee) session.getAttribute("currentUser");
         Optional<Departement> optDept = departementRepository.findById(deptId);
         Optional<Employee> optEmp = employeeRepository.findById(empId);
 
         if (user != null && optDept.isPresent() && optEmp.isPresent()) {
-            if (canEditDept(optDept.get(), user)) {
+            Departement d = optDept.get();
+
+            if (canEditDept(d, user)) {
                 Employee emp = optEmp.get();
-                emp.setDepartement(optDept.get());
+                emp.setDepartement(d);
                 employeeRepository.save(emp);
             }
         }
+        return "redirect:/departements?selectedDeptId=" + deptId;
+    }
+
+    // SUPPRIMER UN MEMBRE DU DEPARTEMENT
+    @PostMapping("/departements/removeMember")
+    public String removeMember(@RequestParam int empId,
+                               @RequestParam int deptId,
+                               HttpSession session) {
+
+        Employee user = (Employee) session.getAttribute("currentUser");
+
+        Optional<Departement> optDept = departementRepository.findById(deptId);
+        Optional<Employee> optEmp = employeeRepository.findById(empId);
+
+        if (user != null && optDept.isPresent() && optEmp.isPresent()) {
+            Departement d = optDept.get();
+
+            if (canEditDept(d, user)) {
+                Employee emp = optEmp.get();
+                emp.setDepartement(null);
+                employeeRepository.save(emp);
+            }
+        }
+
+        return "redirect:/departements?selectedDeptId=" + deptId;
+    }
+
+    // CHANGER LE CHEF DU DEPARTEMENT
+    @PostMapping("/departements/setChief")
+    public String setDeptChief(@RequestParam int deptId,
+                               @RequestParam int idChefDepartement,
+                               HttpSession session) {
+
+        Employee user = (Employee) session.getAttribute("currentUser");
+
+        Optional<Departement> optDept = departementRepository.findById(deptId);
+
+        if (user != null && optDept.isPresent()) {
+            Departement d = optDept.get();
+
+            if (canEditDept(d, user)) {
+                saveDepartementData(d, d.getNomDepartement(), idChefDepartement);
+            }
+        }
+
         return "redirect:/departements?selectedDeptId=" + deptId;
     }
 }

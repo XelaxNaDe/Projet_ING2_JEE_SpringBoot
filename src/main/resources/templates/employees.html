@@ -64,6 +64,17 @@
 <!-- Ajout d'un employé : visible seulement pour l'ADMIN -->
 <div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
     <h2>Ajouter un employé</h2>
+
+    <div th:if="${errorMessage}"
+         style="background:#e74c3c; color:white; padding:10px; margin-bottom:15px; border-radius:5px;">
+        <p th:text="${errorMessage}"></p>
+    </div>
+
+    <div th:if="${successMessage}"
+         style="background:#2ecc71; color:white; padding:10px; margin-bottom:15px; border-radius:5px;">
+        <p th:text="${successMessage}"></p>
+    </div>
+
     <form th:action="@{/employees/add}" method="post">
         <label>Prénom :</label>
         <input type="text" name="fname" required>
@@ -72,7 +83,10 @@
         <input type="text" name="sname" required>
 
         <label>Genre :</label>
-        <input type="text" name="gender" placeholder="M / F">
+        <select name="gender">
+            <option value="M">M</option>
+            <option value="F">F</option>
+        </select>
 
         <label>Email :</label>
         <input type="email" name="email" required>
