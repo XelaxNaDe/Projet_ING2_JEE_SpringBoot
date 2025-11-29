@@ -68,7 +68,15 @@ public class DepartementController {
         if (currentUser == null) return "redirect:/login";
 
         boolean isAdmin = currentUser.hasRole("ADMINISTRATOR");
+
+        boolean isDeptChiefSomewhere = departementRepository.findAll().stream()
+                .anyMatch(d -> d.getIdChefDepartement() != null
+                        && d.getIdChefDepartement().equals(currentUser.getId()));
+
+        boolean isHeadOrAdmin = isAdmin || isDeptChiefSomewhere;
+
         model.addAttribute("isAdmin", isAdmin);
+        model.addAttribute("isHeadOrAdmin", isHeadOrAdmin);
 
         model.addAttribute("departements", departementRepository.findAll());
         model.addAttribute("employees", employeeRepository.findAll());

@@ -68,17 +68,22 @@
 
         <label>Département :</label>
         <select name="deptId" required>
-            <option th:each="d : ${departements}" th:value="${d.idDepartement}" th:text="${d.nomDepartement}"></option>
+            <option th:each="d : ${departements}"
+                    th:value="${d.idDepartement}"
+                    th:text="${d.nomDepartement}"></option>
         </select>
 
         <label>Employé :</label>
         <select name="empId" required>
-            <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.fname + ' ' + e.sname}"></option>
+            <option th:each="e : ${employees}"
+                    th:value="${e.id}"
+                    th:text="${e.fname + ' ' + e.sname}"></option>
         </select>
 
         <button type="submit">Affecter</button>
     </form>
 </div>
+
 
 <!-- LISTE DES DÉPARTEMENTS -->
 <div class="section">
