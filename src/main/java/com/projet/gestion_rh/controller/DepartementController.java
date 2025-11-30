@@ -79,7 +79,7 @@ public class DepartementController {
 
         model.addAttribute("selectedDepartement", null);
         model.addAttribute("members", List.of());
-        model.addAttribute("canManageSelectedDept", false); // par défaut
+        model.addAttribute("canManageSelectedDept", false); 
 
         if (selectedDeptId != null) {
             Optional<Departement> optDept = departementRepository.findById(selectedDeptId);
@@ -88,7 +88,7 @@ public class DepartementController {
                 List<Employee> members = employeeRepository.findByDepartement(d);
                 if (members == null) members = List.of();
 
-                boolean canManage = canEditDept(d, currentUser); // admin OU chef de ce département
+                boolean canManage = canEditDept(d, currentUser); // admin ou chef de dept
 
                 model.addAttribute("selectedDepartement", d);
                 model.addAttribute("members", members);
