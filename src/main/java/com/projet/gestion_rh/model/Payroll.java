@@ -26,7 +26,7 @@ public class Payroll {
     @Column(name = "id_payroll")
     private int idPayroll;
 
-    // L'employé concerné
+    
     @ManyToOne
     @JoinColumn(name = "id", nullable = false)
     private Employee employee;
@@ -40,7 +40,6 @@ public class Payroll {
     @Column(name = "net_pay", nullable = false)
     private double netPay = 0.0;
 
-    // Liste des primes/déductions (OneToMany)
     @OneToMany(mappedBy = "payroll", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<IntStringPayroll> lines = new ArrayList<>();
 
