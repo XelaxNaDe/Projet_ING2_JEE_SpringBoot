@@ -127,14 +127,14 @@ public class DepartementController {
         if (user != null && user.hasRole("ADMINISTRATOR") && optDept.isPresent()) {
             Departement d = optDept.get();
 
-            // 1. Détacher tous les employés de ce département
+            // Détacher tous les employés de ce département
             List<Employee> members = employeeRepository.findByDepartement(d);
             for (Employee emp : members) {
                 emp.setDepartement(null);
                 employeeRepository.save(emp);
             }
 
-            // 2. Supprimer le département
+            // Supprimer le département
             departementRepository.delete(d);
         }
 
