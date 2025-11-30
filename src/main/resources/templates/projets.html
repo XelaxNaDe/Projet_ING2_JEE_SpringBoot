@@ -58,7 +58,10 @@
     </div>
 </header>
 
-<div class="section" th:if="${session.currentUser.hasRole('ADMINISTRATOR') or session.currentUser.hasRole('PROJECTMANAGER')}">
+<div class="section" 
+     th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
+           or session.currentUser.hasRole('PROJECTMANAGER') 
+           or (projetToEdit != null and projetToEdit.chefProjet != null and projetToEdit.chefProjet.id == session.currentUser.id)}">
     <h2 th:text="${projetToEdit != null} ? 'Modifier le projet' : 'Ajouter un projet'"></h2>
 
     <form th:action="@{${projetToEdit != null} ? '/projets/update' : '/projets/add'}" method="post">
@@ -121,12 +124,12 @@
             <td th:text="${p.chefProjet != null ? p.chefProjet.fname + ' ' + p.chefProjet.sname : '—'}"></td>
             <td>
                 <a class="btn-info" th:href="@{/projets(id=${p.idProjet})}">Équipe</a>
-
+            
                 <span th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
-            or (p.chefProjet != null and p.chefProjet.id == session.currentUser.id)}">
+                            or (p.chefProjet != null and p.chefProjet.id == session.currentUser.id)}">
                     
                     <a class="btn-warning" th:href="@{/projets(editId=${p.idProjet})}">Modifier</a>
-
+            
                     <form th:action="@{/projets/delete}" method="post" style="display:inline;">
                         <input type="hidden" name="id" th:value="${p.idProjet}">
                         <button type="submit" class="btn-danger" style="padding: 6px 10px;" onclick="return confirm('Confirmer la suppression ?')">X</button>
@@ -134,9 +137,7 @@
                 </span>
                 
                 <span th:unless="${session.currentUser.hasRole('ADMINISTRATOR') 
-                                 or (session.currentUser.hasRole('PROJECTMANAGER') 
-                                     and p.chefProjet != null 
-                                     and p.chefProjet.id == session.currentUser.id)}"
+                                 or (p.chefProjet != null and p.chefProjet.id == session.currentUser.id)}"
                       style="color:#ccc; font-size:0.8em; margin-left:5px;">
                     (Lecture seule)
                 </span>
@@ -150,10 +151,9 @@
     <h2 th:text="'Gérer l\'équipe : ' + ${selectedProjet.nomProjet}"></h2>
 
     <form th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
-                 or (session.currentUser.hasRole('PROJECTMANAGER') 
-                     and selectedProjet.chefProjet != null 
-                     and selectedProjet.chefProjet.id == session.currentUser.id)}"
+                 or (selectedProjet.chefProjet != null and selectedProjet.chefProjet.id == session.currentUser.id)}"
           th:action="@{/projets/assign}" method="post" style="margin-bottom: 15px; background: #e9ecef; padding: 10px;">
+        
         <label>Ajouter un membre : </label>
         <input type="hidden" name="projetId" th:value="${selectedProjet.idProjet}">
         <select name="empId">
@@ -184,9 +184,7 @@
             <td th:text="${m.position}"></td>
             <td>
                 <form th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
-                             or (session.currentUser.hasRole('PROJECTMANAGER') 
-                                 and selectedProjet.chefProjet != null 
-                                 and selectedProjet.chefProjet.id == session.currentUser.id)}"
+                             or (selectedProjet.chefProjet != null and selectedProjet.chefProjet.id == session.currentUser.id)}"
                       th:action="@{/projets/unassign}" method="post">
                     <input type="hidden" name="projetId" th:value="${selectedProjet.idProjet}">
                     <input type="hidden" name="empId" th:value="${m.id}">
