@@ -28,19 +28,19 @@ public class ProjetController {
         this.employeeRepository = employeeRepository;
     }
 
-    // --- MÉTHODE PRIVÉE DE SÉCURITÉ ---
-    // Vérifie si l'utilisateur a le droit de modifier CE projet spécifique
+    
     private boolean canEditProject(Projet p, Employee user) {
-        // 1. L'Admin a tous les droits
-        if (user.hasRole("ADMINISTRATOR")) return true;
-        
-        // 2. Le Chef de Projet a les droits SUR SES PROJETS
-        if (user.hasRole("PROJECTMANAGER")) {
-            return p.getChefProjet() != null && p.getChefProjet().getId() == user.getId();
-        }
-        
-        return false; // Sinon, refusé
+    // 1. L'Admin a tous les droits
+    if (user.hasRole("ADMINISTRATOR")) return true;
+    
+    // 2. Si l'utilisateur est le Chef désigné du projet, il a le droit
+    // (On retire la vérification user.hasRole("PROJECTMANAGER") qui bloquait inutilement)
+    if (p.getChefProjet() != null && p.getChefProjet().getId() == user.getId()) {
+        return true;
     }
+    
+    return false; // Sinon, refusé
+}
 
     // LECTURE (Accessible à tous les employés connectés)
     @GetMapping("/projets")
