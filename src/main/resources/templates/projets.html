@@ -5,77 +5,91 @@
     <title>Gestion des projets</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f3f3f3; }
-        
+    
         header { 
-            background: #333; color: white; padding: 15px 30px; height: 40px;
-            position: relative; display: flex; justify-content: space-between; align-items: center; 
+            background: #333; 
+            color: white; 
+            padding: 15px 30px; 
+            height: 40px;
+            
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            
             margin-bottom: 20px;
         }
-        header h1 { margin: 0; font-size: 1.5em; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
-        .header-right { display: flex; align-items: center; gap: 10px; z-index: 10; }
+    
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        header h1 { margin: 0; font-size: 1.5em; }
         a { text-decoration: none; }
-
+    
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-nav {
+            padding: 8px 15px;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+            transition: opacity 0.3s;
+        }
+        .btn-nav:hover { opacity: 0.9; }
+    
+        .btn-profile { background-color: #f39c12; } 
+        .btn-logout { background-color: #e74c3c; }  
+ 
         .section { 
             background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
         }
-
+    
         form.inline-form {
-            display: flex;           
-            align-items: center;    
-            gap: 10px;             
-            width: 100%;             
+            display: flex; align-items: center; gap: 10px; width: 100%;
         }
-
-        input[name="nomProjet"] { 
-            flex: 2;                
-            min-width: 150px; 
-            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
-        }
-
-        input[type="date"] { 
-            width: 130px;          
-            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
-        }
+    
+        input[name="nomProjet"] { flex: 2; min-width: 150px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="date"] { width: 130px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
         select[name="chefProjetId"], input[disabled] { 
-            flex: 1.5;              
-            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
-            background-color: white; 
+            flex: 1.5; min-width: 150px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; background-color: white; 
         }
         input[disabled] { background-color: #e9ecef; color: #555; }
-
-        select[name="etat"] { 
-            width: 110px; 
-            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
-        }
-
-        button { 
-            white-space: nowrap;     
-            padding: 9px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; 
-        }
+    
+        select[name="etat"] { width: 110px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    
+        button { white-space: nowrap; padding: 9px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
         button:hover { background: #218838; }
-
-        .cancel-link { color: #dc3545; font-weight: bold; white-space: nowrap; }
-
+        .cancel-link { color: #dc3545; font-weight: bold; white-space: nowrap; margin-left: 10px; }
+    
         table { width: 100%; border-collapse: collapse; margin-top: 0; }
         th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
         th { background: #333; color: white; }
-        .btn-danger { background: #dc3545; padding: 6px 10px; color: white; border-radius:4px; border:none; }
+        
+        .btn-danger { background: #dc3545; padding: 6px 10px; color: white; border-radius:4px; }
         .btn-warning { background: #ffc107; color: black; padding: 6px 10px; border-radius:4px; }
         .btn-info { background: #17a2b8; color: white; padding: 6px 10px; border-radius:4px; }
-
     </style>
 </head>
 
 <body>
 
 <header>
-    <div style="display:flex; align-items:center; gap:15px;">
-        <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
+    <div class="header-left">
+        <a th:href="@{/}" style="color:white; font-size:1.5em; line-height: 1;">&larr;</a>
+        <h1>Gestion des projets</h1>
     </div>
-    <h1>Gestion des projets</h1>
+
     <div class="header-right">
-        <a href="/profile" style="background-color: #f39c12; color: white; padding: 8px 15px; border-radius: 5px;">Mon Profil</a>
-        <a href="/logout" style="background-color: #e74c3c; color: white; padding: 8px 15px; border-radius: 5px;">Se déconnecter</a>
+        <a href="/profile" class="btn-nav btn-profile">Mon Profil</a>
+        <a href="/logout" class="btn-nav btn-logout">Se déconnecter</a>
     </div>
 </header>
 
