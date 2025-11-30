@@ -33,15 +33,12 @@ public class DepartementController {
     }
 
     private boolean canEditDept(Departement d, Employee user) {
-        // ADMIN peut tout
         if (user.hasRole("ADMINISTRATOR")) return true;
 
-        // Chef identifié par id_chef_departement (pas besoin de rôle HEADDEPARTEMENT)
         return isDeptChief(d, user);
     }
 
 
-    // Fonction pour sauvegarder le département + assigner le chef
     private void saveDepartementData(Departement d, String nom, Integer idChef) {
         d.setNomDepartement(nom);
         d.setIdChefDepartement(idChef);
@@ -58,7 +55,6 @@ public class DepartementController {
         }
     }
 
-    // PAGE PRINCIPALE
     @GetMapping("/departements")
     public String departements(
             @RequestParam(name = "selectedDeptId", required = false) Integer selectedDeptId,
@@ -103,7 +99,6 @@ public class DepartementController {
         return "departements";
     }
 
-    // AJOUTER UN DEPARTEMENT (ADMIN)
     @PostMapping("/departements/add")
     public String addDepartement(@RequestParam String nomDepartement,
                                  @RequestParam(required = false) Integer idChefDepartement,
@@ -127,14 +122,12 @@ public class DepartementController {
         if (user != null && user.hasRole("ADMINISTRATOR") && optDept.isPresent()) {
             Departement d = optDept.get();
 
-            // Détacher tous les employés de ce département
             List<Employee> members = employeeRepository.findByDepartement(d);
             for (Employee emp : members) {
                 emp.setDepartement(null);
                 employeeRepository.save(emp);
             }
 
-            // Supprimer le département
             departementRepository.delete(d);
         }
 
@@ -143,7 +136,6 @@ public class DepartementController {
 
 
 
-    // ASSIGNER EMPLOYE A UN DEPARTEMENT
     @PostMapping("/departements/assign")
     public String assignEmployeeToDepartement(@RequestParam int deptId,
                                               @RequestParam int empId,
@@ -165,7 +157,6 @@ public class DepartementController {
         return "redirect:/departements?selectedDeptId=" + deptId;
     }
 
-    // SUPPRIMER UN MEMBRE DU DEPARTEMENT
     @PostMapping("/departements/removeMember")
     public String removeMember(@RequestParam int empId,
                                @RequestParam int deptId,
@@ -189,7 +180,6 @@ public class DepartementController {
         return "redirect:/departements?selectedDeptId=" + deptId;
     }
 
-    // CHANGER LE CHEF DU DEPARTEMENT
     @PostMapping("/departements/setChief")
     public String setDeptChief(@RequestParam int deptId,
                                @RequestParam int idChefDepartement,

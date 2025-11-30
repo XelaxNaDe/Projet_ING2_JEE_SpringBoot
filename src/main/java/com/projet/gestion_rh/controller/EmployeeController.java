@@ -43,7 +43,6 @@ public class EmployeeController {
                                 HttpSession session) {
         if (session.getAttribute("currentUser") == null) return "redirect:/login";
 
-        // Nettoyer les chaînes vides -> null (pour la requête JPQL)
         if (fname != null && fname.trim().isEmpty()) fname = null;
         if (sname != null && sname.trim().isEmpty()) sname = null;
         if (position != null && position.trim().isEmpty()) position = null;
@@ -110,7 +109,6 @@ public class EmployeeController {
 
             Employee e = opt.get();
 
-            // Vérifier si l’email est déjà utilisé
             Optional<Employee> existing = employeeRepository.findByEmail(email);
             if (existing.isPresent() && existing.get().getId() != id){
                 redirectAttributes.addFlashAttribute(
@@ -120,7 +118,6 @@ public class EmployeeController {
                 return "redirect:/employees";
             }
 
-            // l'email est soit libre, soit c'est le même employé
             e.setFname(fname);
             e.setSname(sname);
             e.setGender(gender);
@@ -145,7 +142,6 @@ public class EmployeeController {
 
 
 
-    // AJOUT  Seul l'ADMIN peut ajouter
     @PostMapping("/employees/add")
     public String addEmployee(@RequestParam String fname,
                               @RequestParam String sname,
@@ -193,7 +189,6 @@ public class EmployeeController {
         return "redirect:/employees";
     }
 
-    // SUPPRESSION  Seul l'ADMIN peut supprimer
     @PostMapping("/employees/delete")
     public String deleteEmployee(@RequestParam int id, HttpSession session) {
         Employee user = (Employee) session.getAttribute("currentUser");

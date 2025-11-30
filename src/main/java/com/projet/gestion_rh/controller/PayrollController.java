@@ -41,12 +41,10 @@ public class PayrollController {
         Employee user = (Employee) session.getAttribute("currentUser");
         if (user == null) return "redirect:/login";
 
-        // FILTRAGE DES DONNEES SELON LE ROLE
         if (user.hasRole("ADMINISTRATOR")) {
             model.addAttribute("payrolls", payrollRepository.findAll());
             model.addAttribute("employees", employeeRepository.findAll());
         } else {
-            // Employé peut Voir ses fiches seulement
             model.addAttribute("payrolls", payrollRepository.findByEmployee(user));
             model.addAttribute("employees", List.of()); 
         }
@@ -61,7 +59,7 @@ public class PayrollController {
                 }
             }
         }
-        return "payrolls"; // Cherche payrolls.html
+        return "payrolls";
     }
 
     @PostMapping("/payrolls/add")
@@ -83,7 +81,6 @@ public class PayrollController {
         p.setDate(LocalDate.parse(date));
         p.setSalary((int) salary);
 
-        // Net = salaire brut 
         p.setNetPay(salary);
 
         payrollRepository.save(p);
@@ -109,12 +106,11 @@ public class PayrollController {
             IntStringPayroll line = new IntStringPayroll();
             line.setLabel(label);
             line.setTypeList(typeList);
-            line.setAmount((int) amount);      // tu es en int dans l’entité
+            line.setAmount((int) amount);
             line.setPayroll(p);
 
             lineRepository.save(line);
 
-            // Mettre à jour le net à payer
             double net = p.getNetPay();
             if ("Prime".equalsIgnoreCase(typeList)) {
                 net += amount;
@@ -123,7 +119,6 @@ public class PayrollController {
             }
             p.setNetPay(net);
 
-            // Sauvegarder la fiche de paie
             payrollRepository.save(p);
         }
         return "redirect:/payrolls?id=" + payrollId;
@@ -145,21 +140,16 @@ public class PayrollController {
 
             if (p != null && p.getIdPayroll() == payrollId) {
 
-                // Mettre à jour le net avant suppression
                 double net = p.getNetPay();
                 if ("Prime".equalsIgnoreCase(line.getTypeList())) {
-                    // On enlève la prime
                     net -= line.getAmount();
                 } else if ("Déduction".equalsIgnoreCase(line.getTypeList())) {
-                    // On enlève une déduction -> on rajoute au net
                     net += line.getAmount();
                 }
                 p.setNetPay(net);
 
-                // Supprimer la ligne
                 lineRepository.delete(line);
 
-                // Sauvegarder la fiche de paie
                 payrollRepository.save(p);
             }
         }
@@ -168,7 +158,6 @@ public class PayrollController {
 
 
 
-    // AJOUT SUPPRESSION
     @PostMapping("/payrolls/delete")
     public String deletePayroll(@RequestParam int id, HttpSession session) {
         Employee user = (Employee) session.getAttribute("currentUser");
@@ -186,14 +175,13 @@ public class PayrollController {
         Optional<Payroll> opt = payrollRepository.findById(id);
         if (opt.isPresent()) {
             Payroll p = opt.get();
-            
-            // On vérifie que c'est bien ma fiche ou que je suis Admin
+
             if (user.hasRole("ADMINISTRATOR") || p.getEmployee().getId() == user.getId()) {
                 model.addAttribute("payroll", p);
                 model.addAttribute("lines", p.getLines());
-                return "payroll_print"; // Renvoie vers payroll_print.html
+                return "payroll_print";
             }
         }
-        return "redirect:/payrolls"; // Retour liste si erreur ou fraude
+        return "redirect:/payrolls";
     }
 }
