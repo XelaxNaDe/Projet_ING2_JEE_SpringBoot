@@ -30,17 +30,14 @@ public class ProjetController {
 
     
     private boolean canEditProject(Projet p, Employee user) {
-    // 1. L'Admin a tous les droits
-    if (user.hasRole("ADMINISTRATOR")) return true;
-    
-    // 2. Si l'utilisateur est le Chef désigné du projet, il a le droit
-    // (On retire la vérification user.hasRole("PROJECTMANAGER") qui bloquait inutilement)
-    if (p.getChefProjet() != null && p.getChefProjet().getId() == user.getId()) {
-        return true;
+        if (user.hasRole("ADMINISTRATOR")) return true;
+        
+        if (p.getChefProjet() != null && p.getChefProjet().getId() == user.getId()) {
+            return true;
+        }
+        
+        return false;
     }
-    
-    return false; // Sinon, refusé
-}
 
     // LECTURE (Accessible à tous les employés connectés)
     @GetMapping("/projets")
@@ -57,6 +54,7 @@ public class ProjetController {
             projetRepository.findById(id).ifPresent(p -> {
                 model.addAttribute("selectedProjet", p);
                 model.addAttribute("equipe", p.getEquipe());
+                model.addAttribute("projetToEdit", p);
             });
         }
 
@@ -65,8 +63,6 @@ public class ProjetController {
         }
         return "projets";
     }
-
-    // AJOUT (Seulement Admin ou n'importe quel Project Manager)
     @PostMapping("/projets/add")
     public String addProjet(@RequestParam String nomProjet,
                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -76,13 +72,16 @@ public class ProjetController {
                             HttpSession session) {
 
         Employee user = (Employee) session.getAttribute("currentUser");
-        // Sécurité : Faut être Admin ou Chef de projet pour créer
-        if (user == null || (!user.hasRole("ADMINISTRATOR") && !user.hasRole("PROJECTMANAGER"))) {
-            return "redirect:/projets?error=forbidden";
-        }
+        if (user == null) return "redirect:/login"; 
 
         Projet p = new Projet();
-        saveProjetData(p, nomProjet, dateDebut, dateFin, chefProjetId, etat);
+        Integer idChefFinal = chefProjetId;
+
+        if (!user.hasRole("ADMINISTRATOR")) {
+            idChefFinal = user.getId();
+        }
+
+        saveProjetData(p, nomProjet, dateDebut, dateFin, idChefFinal, etat);
         return "redirect:/projets";
     }
 
@@ -101,9 +100,14 @@ public class ProjetController {
 
         if (user != null && optP.isPresent()) {
             Projet p = optP.get();
-            // VÉRIFICATION DES DROITS
+            
             if (canEditProject(p, user)) {
-                saveProjetData(p, nomProjet, dateDebut, dateFin, chefProjetId, etat);
+                Integer finalChefId = chefProjetId;
+                if (!user.hasRole("ADMINISTRATOR")) {
+                    finalChefId = user.getId(); 
+                }
+
+                saveProjetData(p, nomProjet, dateDebut, dateFin, finalChefId, etat);
             }
         }
         return "redirect:/projets";
