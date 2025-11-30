@@ -83,7 +83,7 @@ public class EmployeeController {
 
         model.addAttribute("employee", e);
         model.addAttribute("departements", departementRepository.findAll());
-        return "employee-edit"; // nouveau template
+        return "employee-edit";
     }
 
     @PostMapping("/employees/update")
