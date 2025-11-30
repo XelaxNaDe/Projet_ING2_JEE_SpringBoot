@@ -37,7 +37,7 @@ public class DashboardController {
 
     @GetMapping("/login")
     public String showLoginForm() {
-        return "connexion"; // Cherche src/main/resources/templates/login.html
+        return "connexion"; 
     }
 
     @PostMapping("/login")
