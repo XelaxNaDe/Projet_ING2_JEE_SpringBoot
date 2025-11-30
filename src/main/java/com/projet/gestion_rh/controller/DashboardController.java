@@ -20,7 +20,6 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class DashboardController {
 
-    // Repositories nécessaires pour le Dashboard
     private final DepartementRepository departementRepository;
     private final EmployeeRepository employeeRepository;
     private final ProjetRepository projetRepository;
@@ -36,13 +35,11 @@ public class DashboardController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    // AFFICHER LA PAGE DE LOGIN
     @GetMapping("/login")
     public String showLoginForm() {
         return "connexion"; // Cherche src/main/resources/templates/login.html
     }
 
-    // TRAITER LE FORMULAIRE DE LOGIN
     @PostMapping("/login")
     public String processLogin(@RequestParam String email, 
                                @RequestParam String password, 
@@ -70,7 +67,6 @@ public class DashboardController {
         return "connexion";
     }
 
-    // DECONNEXION
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
@@ -79,38 +75,32 @@ public class DashboardController {
 
     @GetMapping("/")
     public String home(Model model, HttpSession session) {
-        // Sécurité Si pas connecté, on redirige vers le login
-        // Comme c'est le même contrôleur, Spring trouve le chemin tout de suite
         if (session.getAttribute("currentUser") == null) {
             return "redirect:/login";
         }
 
-        // Chargement des statistiques pour le dashboard
         model.addAttribute("departementCount", departementRepository.count());
         model.addAttribute("employeeCount", employeeRepository.count());
         model.addAttribute("projetCount", projetRepository.count());
         model.addAttribute("payrollCount", payrollRepository.count());
         
-        return "dashboard"; // Cherche src/main/resources/templates/dashboard.html
+        return "dashboard";
     }
 
-    // Afficher la page Profil
     @GetMapping("/profile")
     public String showProfile(HttpSession session, Model model) {
         Employee currentUser = (Employee) session.getAttribute("currentUser");
         if (currentUser == null) return "redirect:/login";
 
-        // On recharge les données depuis la BDD
         Optional<Employee> empOpt = employeeRepository.findById(currentUser.getId());
         if (empOpt.isPresent()) {
             model.addAttribute("employee", empOpt.get());
-            return "profile"; // Cherche profile.html
+            return "profile";
         }
         
         return "redirect:/login";
     }
 
-    // Traiter la mise à jour
     @PostMapping("/profile/update")
     public String updateProfile(@RequestParam String email,
                                 @RequestParam(required = false) String password,
@@ -120,12 +110,9 @@ public class DashboardController {
         Employee currentUser = (Employee) session.getAttribute("currentUser");
         if (currentUser == null) return "redirect:/login";
 
-        // On récupère l'employé réel en base
         Employee empToUpdate = employeeRepository.findById(currentUser.getId()).orElse(null);
         if (empToUpdate == null) return "redirect:/login";
 
-        // Vérification Email Unique
-        // Si on change l'email on regarde si il est pas utiliser par un autre
         if (!email.equals(empToUpdate.getEmail())) {
             Optional<Employee> existing = employeeRepository.findByEmail(email);
             if (existing.isPresent()) {
@@ -136,15 +123,11 @@ public class DashboardController {
             empToUpdate.setEmail(email);
         }
 
-        // Changement de mot de passe si rempli
         if (password != null && !password.isBlank()) {
             empToUpdate.setPassword(passwordEncoder.encode(password));
         }
-
-        // Sauvegarde
         employeeRepository.save(empToUpdate);
 
-        // On met à jour la session avec les nouvelles infos
         session.setAttribute("currentUser", empToUpdate);
 
         model.addAttribute("success", "Profil mis à jour");

@@ -63,6 +63,7 @@ public class ProjetController {
         }
         return "projets";
     }
+
     @PostMapping("/projets/add")
     public String addProjet(@RequestParam String nomProjet,
                             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
@@ -72,26 +73,23 @@ public class ProjetController {
                             HttpSession session) {
 
         Employee user = (Employee) session.getAttribute("currentUser");
-        if (user == null) return "redirect:/login"; 
-
-        Projet p = new Projet();
-        Integer idChefFinal = chefProjetId;
-
-        if (!user.hasRole("ADMINISTRATOR")) {
-            idChefFinal = user.getId();
+        
+        if (user == null || !user.hasRole("ADMINISTRATOR")) {
+            return "redirect:/projets"; 
         }
 
-        saveProjetData(p, nomProjet, dateDebut, dateFin, idChefFinal, etat);
+        Projet p = new Projet();
+        saveProjetData(p, nomProjet, dateDebut, dateFin, chefProjetId, etat);
+        
         return "redirect:/projets";
     }
 
-    // MODIFICATION (Admin ou Le Chef du projet)
     @PostMapping("/projets/update")
     public String updateProjet(@RequestParam Integer id,
                                @RequestParam String nomProjet,
                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateDebut,
                                @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFin,
-                               @RequestParam(required = false) Integer chefProjetId,
+                               @RequestParam(required = false) Integer chefProjetId, // Peut être null si non-admin
                                @RequestParam String etat,
                                HttpSession session) {
 
@@ -102,12 +100,16 @@ public class ProjetController {
             Projet p = optP.get();
             
             if (canEditProject(p, user)) {
-                Integer finalChefId = chefProjetId;
+                Integer idChefFinal = chefProjetId;
+
                 if (!user.hasRole("ADMINISTRATOR")) {
-                    finalChefId = user.getId(); 
+                    if (p.getChefProjet() != null) {
+                        idChefFinal = p.getChefProjet().getId(); 
+                        idChefFinal = user.getId(); 
+                    }
                 }
 
-                saveProjetData(p, nomProjet, dateDebut, dateFin, finalChefId, etat);
+                saveProjetData(p, nomProjet, dateDebut, dateFin, idChefFinal, etat);
             }
         }
         return "redirect:/projets";
@@ -154,7 +156,7 @@ public class ProjetController {
         if (user != null && optP.isPresent() && optE.isPresent()) {
             if (canEditProject(optP.get(), user)) {
                 Employee e = optE.get();
-                e.getProjets().add(optP.get()); // MAJ relation ManyToMany
+                e.getProjets().add(optP.get()); 
                 employeeRepository.save(e);
             }
         }
@@ -175,9 +177,7 @@ public class ProjetController {
             // Vérification sécurité
             if (canEditProject(optP.get(), user)) {
                 Employee e = optE.get();
-                // On retire le projet de la liste de l'employé
                 e.getProjets().remove(optP.get());
-                // On sauvegarde l'employé (propriétaire de la relation)
                 employeeRepository.save(e);
             }
         }
