@@ -4,67 +4,87 @@
     <meta charset="UTF-8">
     <title>Gestion des projets</title>
     <style>
-        body { font-family: Arial; margin: 0; background: #f3f3f3; }
-        .section { margin-bottom: 30px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background: #333; color: white; }
-        input[type="text"], input[type="date"], select { padding: 8px; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        button { padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #218838; }
-        .btn-danger { background: #dc3545; }
-        .btn-warning { background: #ffc107; color: black; text-decoration: none; padding: 6px 10px; border-radius: 4px; font-size: 0.9em; }
-        .btn-info { background: #17a2b8; color: white; text-decoration: none; padding: 6px 10px; border-radius: 4px; font-size: 0.9em; }
-
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; background: #f3f3f3; }
+        
         header { 
-            background: #333; 
-            color: white; 
-            padding: 15px 30px; 
-            display: flex; 
-            justify-content: space-between;
-            align-items: center; 
+            background: #333; color: white; padding: 15px 30px; height: 40px;
+            position: relative; display: flex; justify-content: space-between; align-items: center; 
+            margin-bottom: 20px;
+        }
+        header h1 { margin: 0; font-size: 1.5em; position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+        .header-right { display: flex; align-items: center; gap: 10px; z-index: 10; }
+        a { text-decoration: none; }
+
+        .section { 
+            background: white; padding: 20px; margin: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
         }
 
-        .logout-btn {
-            background-color: #e74c3c; 
-            color: white;
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-            font-size: 14px;
-            transition: background 0.3s;
-    }
+        form.inline-form {
+            display: flex;           
+            align-items: center;    
+            gap: 10px;             
+            width: 100%;             
+        }
 
-        .logout-btn:hover {
-            background-color: #c0392b; 
-    }
+        input[name="nomProjet"] { 
+            flex: 2;                
+            min-width: 150px; 
+            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+        }
+
+        input[type="date"] { 
+            width: 130px;          
+            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+        }
+        select[name="chefProjetId"], input[disabled] { 
+            flex: 1.5;              
+            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+            background-color: white; 
+        }
+        input[disabled] { background-color: #e9ecef; color: #555; }
+
+        select[name="etat"] { 
+            width: 110px; 
+            padding: 8px; border: 1px solid #ccc; border-radius: 4px;
+        }
+
+        button { 
+            white-space: nowrap;     
+            padding: 9px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; 
+        }
+        button:hover { background: #218838; }
+
+        .cancel-link { color: #dc3545; font-weight: bold; white-space: nowrap; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #333; color: white; }
+        .btn-danger { background: #dc3545; padding: 6px 10px; color: white; border-radius:4px; border:none; }
+        .btn-warning { background: #ffc107; color: black; padding: 6px 10px; border-radius:4px; }
+        .btn-info { background: #17a2b8; color: white; padding: 6px 10px; border-radius:4px; }
+
     </style>
 </head>
 
 <body>
+
 <header>
     <div style="display:flex; align-items:center; gap:15px;">
         <a th:href="@{/}" style="color:white; text-decoration:none; font-size:1.2em;">&larr;</a>
-        <h1 style="margin:0;">Gestion des projets</h1>
     </div>
-
-    <div>
-        <a href="/profile" style="background-color: #f39c12; color: white; text-decoration: none; padding: 8px 15px; border-radius: 5px; margin-right: 10px;">
-            Mon Profil
-        </a>
-        
-        <a href="/logout" class="logout-btn">Se déconnecter</a>
+    <h1>Gestion des projets</h1>
+    <div class="header-right">
+        <a href="/profile" style="background-color: #f39c12; color: white; padding: 8px 15px; border-radius: 5px;">Mon Profil</a>
+        <a href="/logout" style="background-color: #e74c3c; color: white; padding: 8px 15px; border-radius: 5px;">Se déconnecter</a>
     </div>
 </header>
 
 <div class="section" 
-     th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
-           or session.currentUser.hasRole('PROJECTMANAGER') 
-           or (projetToEdit != null and projetToEdit.chefProjet != null and projetToEdit.chefProjet.id == session.currentUser.id)}">
-    <h2 th:text="${projetToEdit != null} ? 'Modifier le projet' : 'Ajouter un projet'"></h2>
+     th:if="${session.currentUser.hasRole('ADMINISTRATOR') or projetToEdit != null}">
 
-    <form th:action="@{${projetToEdit != null} ? '/projets/update' : '/projets/add'}" method="post">
+    <h2 style="margin-top:0;" th:text="${projetToEdit != null} ? 'Modifier le projet' : 'Ajouter un projet'"></h2>
+
+    <form th:action="@{${projetToEdit != null} ? '/projets/update' : '/projets/add'}" method="post" class="inline-form">
 
         <input type="hidden" name="id" th:if="${projetToEdit != null}" th:value="${projetToEdit.idProjet}">
 
@@ -73,18 +93,22 @@
 
         <input type="date" name="dateDebut" required title="Date de début"
                th:value="${projetToEdit != null} ? ${projetToEdit.dateDebut} : ''">
-
         <input type="date" name="dateFin" required title="Date de fin"
                th:value="${projetToEdit != null} ? ${projetToEdit.dateFin} : ''">
 
-        <select name="chefProjetId">
-            <option value="">-- Chef de projet --</option>
+        <select name="chefProjetId" th:if="${session.currentUser.hasRole('ADMINISTRATOR')}">
+            <option value="">-- Chef --</option>
             <option th:each="e : ${employees}"
                     th:value="${e.id}"
                     th:text="${e.fname + ' ' + e.sname}"
                     th:selected="${projetToEdit != null && projetToEdit.chefProjet != null && projetToEdit.chefProjet.id == e.id}">
             </option>
         </select>
+
+        <input type="text" disabled 
+               th:unless="${session.currentUser.hasRole('ADMINISTRATOR')}"
+               th:value="${projetToEdit != null && projetToEdit.chefProjet != null ? projetToEdit.chefProjet.fname + ' ' + projetToEdit.chefProjet.sname : 'Moi'}"
+               placeholder="Chef de projet">
 
         <select name="etat">
             <option value="En cours" th:selected="${projetToEdit != null && projetToEdit.etat == 'En cours'}">En cours</option>
@@ -93,8 +117,8 @@
         </select>
 
         <button type="submit" th:text="${projetToEdit != null} ? 'Mettre à jour' : 'Ajouter'"></button>
-        
-        <a th:if="${projetToEdit != null}" th:href="@{/projets}" style="margin-left: 10px; color: red;">Annuler</a>
+        <a th:if="${projetToEdit != null}" th:href="@{/projets}" class="cancel-link">Annuler</a>
+
     </form>
 </div>
 
@@ -107,7 +131,7 @@
             <th>Nom</th>
             <th>Dates</th>
             <th>État</th>
-            <th>Chef de projet</th>
+            <th>Chef</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -124,23 +148,18 @@
             <td th:text="${p.chefProjet != null ? p.chefProjet.fname + ' ' + p.chefProjet.sname : '—'}"></td>
             <td>
                 <a class="btn-info" th:href="@{/projets(id=${p.idProjet})}">Équipe</a>
-            
+
                 <span th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
                             or (p.chefProjet != null and p.chefProjet.id == session.currentUser.id)}">
-                    
                     <a class="btn-warning" th:href="@{/projets(editId=${p.idProjet})}">Modifier</a>
-            
                     <form th:action="@{/projets/delete}" method="post" style="display:inline;">
                         <input type="hidden" name="id" th:value="${p.idProjet}">
-                        <button type="submit" class="btn-danger" style="padding: 6px 10px;" onclick="return confirm('Confirmer la suppression ?')">X</button>
+                        <button type="submit" class="btn-danger" onclick="return confirm('Supprimer ?')">X</button>
                     </form>
                 </span>
-                
                 <span th:unless="${session.currentUser.hasRole('ADMINISTRATOR') 
                                  or (p.chefProjet != null and p.chefProjet.id == session.currentUser.id)}"
-                      style="color:#ccc; font-size:0.8em; margin-left:5px;">
-                    (Lecture seule)
-                </span>
+                      style="color:#ccc; font-size:0.8em;">(Lecture seule)</span>
             </td>
         </tr>
         </tbody>
@@ -149,35 +168,20 @@
 
 <div class="section" th:if="${selectedProjet != null}" style="border: 2px solid #17a2b8;">
     <h2 th:text="'Gérer l\'équipe : ' + ${selectedProjet.nomProjet}"></h2>
-
     <form th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
                  or (selectedProjet.chefProjet != null and selectedProjet.chefProjet.id == session.currentUser.id)}"
-          th:action="@{/projets/assign}" method="post" style="margin-bottom: 15px; background: #e9ecef; padding: 10px;">
-        
-        <label>Ajouter un membre : </label>
+          th:action="@{/projets/assign}" method="post" class="inline-form" style="justify-content: flex-start;">
+        <label>Ajouter : </label>
         <input type="hidden" name="projetId" th:value="${selectedProjet.idProjet}">
-        <select name="empId">
-            <option th:each="e : ${employees}"
-                    th:value="${e.id}"
-                    th:text="${e.fname + ' ' + e.sname + ' (' + e.position + ')'}">
-            </option>
+        <select name="empId" style="flex:0; min-width:200px;">
+            <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.fname + ' ' + e.sname + ' (' + e.position + ')'}"></option>
         </select>
         <button type="submit">Affecter</button>
     </form>
-
     <table>
-        <thead>
-        <tr>
-            <th>Nom</th>
-            <th>Email</th>
-            <th>Poste</th>
-            <th>Action</th>
-        </tr>
-        </thead>
+        <thead><tr><th>Nom</th><th>Email</th><th>Poste</th><th>Action</th></tr></thead>
         <tbody>
-        <tr th:if="${equipe.empty}">
-            <td colspan="4" style="text-align:center; color:gray;">Aucun membre dans ce projet.</td>
-        </tr>
+        <tr th:if="${equipe.empty}"><td colspan="4" style="text-align:center; color:gray;">Aucun membre.</td></tr>
         <tr th:each="m : ${equipe}">
             <td th:text="${m.fname + ' ' + m.sname}"></td>
             <td th:text="${m.email}"></td>
