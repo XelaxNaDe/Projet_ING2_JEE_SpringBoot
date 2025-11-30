@@ -1,5 +1,7 @@
 package com.projet.gestion_rh.controller;
 
+import com.projet.gestion_rh.model.utils.Role;
+import com.projet.gestion_rh.repository.RoleRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,11 +24,13 @@ public class EmployeeController {
     private final EmployeeRepository employeeRepository;
     private final DepartementRepository departementRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RoleRepository roleRepository;
 
-    public EmployeeController(EmployeeRepository employeeRepository, DepartementRepository departementRepository, PasswordEncoder passwordEncoder) {
+    public EmployeeController(EmployeeRepository employeeRepository, DepartementRepository departementRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
         this.employeeRepository = employeeRepository;
         this.departementRepository = departementRepository;
         this.passwordEncoder = passwordEncoder;
+        this.roleRepository = roleRepository;
         
     }
 
@@ -150,6 +154,7 @@ public class EmployeeController {
                               @RequestParam String password,
                               @RequestParam(required = false) String position,
                               @RequestParam(required = false) Integer departementId,
+                              @RequestParam String role,
                               HttpSession session,
                               RedirectAttributes redirectAttributes) {
         
@@ -177,6 +182,12 @@ public class EmployeeController {
             if (departementId != null) {
                 departementRepository.findById(departementId).ifPresent(e::setDepartement);
             }
+
+            Role selectedRole = roleRepository.findByNomRole(role);
+            if (selectedRole != null) {
+                e.getRoles().add(selectedRole);
+            }
+
             employeeRepository.save(e);
         }
         return "redirect:/employees";
