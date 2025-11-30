@@ -14,8 +14,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-            .csrf(csrf -> csrf.disable()) // Désactive la protection CSRF pour simplifier les formulaires
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Pour la console H2 si utilisée
+            .csrf(csrf -> csrf.disable()) // pour simplifier les formulaire
+            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Pour la console H2 si utilise
 
         return http.build();
     }
