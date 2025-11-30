@@ -9,7 +9,6 @@ import java.util.List;
 public interface PayrollRepository extends JpaRepository<Payroll, Integer> {
     
 
-    // "SELECT * FROM Payroll WHERE employee_id = ?"
     List<Payroll> findByEmployee(Employee employee);
     
 }
