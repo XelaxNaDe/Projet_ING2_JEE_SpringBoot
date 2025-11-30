@@ -27,12 +27,10 @@ public class Projet {
     @Column(columnDefinition = "ENUM('En cours', 'Terminé', 'Annulé')")
     private String etat;
 
-    // Le Chef de projet
     @ManyToOne
     @JoinColumn(name = "id_chef_projet")
     private Employee chefProjet;
 
-    // L'équipe
     @ManyToMany(mappedBy = "projets")
     private Set<Employee> equipe = new HashSet<>();
 
