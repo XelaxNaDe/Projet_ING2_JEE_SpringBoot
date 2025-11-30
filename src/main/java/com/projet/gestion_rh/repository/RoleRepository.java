@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RoleRepository extends JpaRepository<Role, Integer> {
 
-    // Optionnel : méthode pratique pour chercher par nom
     Role findByNomRole(String nomRole);
 }
 
