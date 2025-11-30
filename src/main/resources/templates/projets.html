@@ -123,9 +123,7 @@
                 <a class="btn-info" th:href="@{/projets(id=${p.idProjet})}">Équipe</a>
 
                 <span th:if="${session.currentUser.hasRole('ADMINISTRATOR') 
-                            or (session.currentUser.hasRole('PROJECTMANAGER') 
-                                and p.chefProjet != null 
-                                and p.chefProjet.id == session.currentUser.id)}">
+            or (p.chefProjet != null and p.chefProjet.id == session.currentUser.id)}">
                     
                     <a class="btn-warning" th:href="@{/projets(editId=${p.idProjet})}">Modifier</a>
 
