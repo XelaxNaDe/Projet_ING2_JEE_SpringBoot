@@ -15,7 +15,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
             .csrf(csrf -> csrf.disable()) // pour simplifier les formulaire
-            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Pour la console H2 si utilise
+            .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Pour la console h2 si utilise
 
         return http.build();
     }
