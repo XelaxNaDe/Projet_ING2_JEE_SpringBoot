@@ -32,7 +32,7 @@ public class PayrollController {
         this.lineRepository = lRepo;
     }
 
-    // ATTENTION : J'ai mis "/payrolls" avec un 's' pour correspondre à ton HTML
+
     @GetMapping("/payrolls")
     public String payrolls(@RequestParam(required = false) Integer id, 
                            Model model, 
@@ -41,12 +41,12 @@ public class PayrollController {
         Employee user = (Employee) session.getAttribute("currentUser");
         if (user == null) return "redirect:/login";
 
-        // FILTRAGE DES DONNÉES SELON LE RÔLE
+        // FILTRAGE DES DONNEES SELON LE ROLE
         if (user.hasRole("ADMINISTRATOR")) {
             model.addAttribute("payrolls", payrollRepository.findAll());
             model.addAttribute("employees", employeeRepository.findAll());
         } else {
-            // Employé -> Voir ses fiches seulement
+            // Employé peut Voir ses fiches seulement
             model.addAttribute("payrolls", payrollRepository.findByEmployee(user));
             model.addAttribute("employees", List.of()); 
         }
@@ -57,9 +57,6 @@ public class PayrollController {
                 Payroll p = opt.get();
                 if (user.hasRole("ADMINISTRATOR") || p.getEmployee().getId() == user.getId()) {
                     model.addAttribute("selectedPayroll", p);
-                    // CORRECTION : Utilise getDetails() si c'est le nom dans ton Modèle Payroll
-                    // Si dans Payroll.java c'est "private List<IntStringPayroll> lines", alors c'est getLines()
-                    // Je mets getDetails() car c'était le nom dans ton HTML précédent.
                     model.addAttribute("lines", p.getLines()); 
                 }
             }
@@ -86,10 +83,9 @@ public class PayrollController {
         p.setDate(LocalDate.parse(date));
         p.setSalary((int) salary);
 
-        // Net = salaire brut (aucune ligne encore)
+        // Net = salaire brut 
         p.setNetPay(salary);
 
-        // IMPORTANT : ne rien faire avec les lignes ici !
         payrollRepository.save(p);
 
         return "redirect:/payrolls?id=" + p.getIdPayroll();
@@ -110,17 +106,15 @@ public class PayrollController {
         if (optP.isPresent()) {
             Payroll p = optP.get();
 
-            // 1) Créer la ligne
             IntStringPayroll line = new IntStringPayroll();
             line.setLabel(label);
             line.setTypeList(typeList);
             line.setAmount((int) amount);      // tu es en int dans l’entité
             line.setPayroll(p);
 
-            // 2) Sauvegarder la ligne directement
             lineRepository.save(line);
 
-            // 3) Mettre à jour le net à payer
+            // Mettre à jour le net à payer
             double net = p.getNetPay();
             if ("Prime".equalsIgnoreCase(typeList)) {
                 net += amount;
@@ -129,7 +123,7 @@ public class PayrollController {
             }
             p.setNetPay(net);
 
-            // 4) Sauvegarder la fiche de paie
+            // Sauvegarder la fiche de paie
             payrollRepository.save(p);
         }
         return "redirect:/payrolls?id=" + payrollId;
@@ -151,7 +145,7 @@ public class PayrollController {
 
             if (p != null && p.getIdPayroll() == payrollId) {
 
-                // 1) Mettre à jour le net avant suppression
+                // Mettre à jour le net avant suppression
                 double net = p.getNetPay();
                 if ("Prime".equalsIgnoreCase(line.getTypeList())) {
                     // On enlève la prime
@@ -162,10 +156,10 @@ public class PayrollController {
                 }
                 p.setNetPay(net);
 
-                // 2) Supprimer la ligne
+                // Supprimer la ligne
                 lineRepository.delete(line);
 
-                // 3) Sauvegarder la fiche de paie
+                // Sauvegarder la fiche de paie
                 payrollRepository.save(p);
             }
         }
@@ -193,10 +187,10 @@ public class PayrollController {
         if (opt.isPresent()) {
             Payroll p = opt.get();
             
-            // SÉCURITÉ : On vérifie que c'est bien ma fiche ou que je suis Admin
+            // On vérifie que c'est bien ma fiche ou que je suis Admin
             if (user.hasRole("ADMINISTRATOR") || p.getEmployee().getId() == user.getId()) {
                 model.addAttribute("payroll", p);
-                model.addAttribute("lines", p.getLines()); // ou getDetails() selon votre modèle
+                model.addAttribute("lines", p.getLines());
                 return "payroll_print"; // Renvoie vers payroll_print.html
             }
         }
