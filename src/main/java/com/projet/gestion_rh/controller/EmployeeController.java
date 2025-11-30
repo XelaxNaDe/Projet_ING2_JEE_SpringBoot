@@ -141,7 +141,7 @@ public class EmployeeController {
 
 
 
-    // AJOUT : Seul l'ADMIN peut ajouter
+    // AJOUT  Seul l'ADMIN peut ajouter
     @PostMapping("/employees/add")
     public String addEmployee(@RequestParam String fname,
                               @RequestParam String sname,
@@ -182,7 +182,7 @@ public class EmployeeController {
         return "redirect:/employees";
     }
 
-    // SUPPRESSION : Seul l'ADMIN peut supprimer
+    // SUPPRESSION  Seul l'ADMIN peut supprimer
     @PostMapping("/employees/delete")
     public String deleteEmployee(@RequestParam int id, HttpSession session) {
         Employee user = (Employee) session.getAttribute("currentUser");
