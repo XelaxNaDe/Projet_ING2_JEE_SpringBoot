@@ -15,7 +15,7 @@ public class Departement {
     private String nomDepartement;
 
     @Column(name = "id_chef_departement")
-    private Integer idChefDepartement; // Peut être NULL dans le SQL
+    private Integer idChefDepartement;
 
     public Departement() {}
 
