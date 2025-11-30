@@ -28,18 +28,15 @@ public class StatsController {
     public String showStatistics(Model model, HttpSession session) {
         Employee user = (Employee) session.getAttribute("currentUser");
         
-        // Seul l'ADMINISTRATEUR ou le Chef de Dept peut voir les stats
+        // y'a que l'admin ou le Chef de Dept peut voir les stats
         if (user == null || (!user.hasRole("ADMINISTRATOR") && !user.hasRole("HEADDEPARTEMENT"))) {
             return "redirect:/";
         }
 
-        // Employés par Département
         model.addAttribute("empByDept", departementRepository.countEmployeesByDepartement());
 
-        // Employés par Projet
         model.addAttribute("empByProjet", projetRepository.countEmployeesByProjet());
 
-        // Stats des Projets (État)
         model.addAttribute("projetByEtat", projetRepository.countProjetsByEtat());
 
         return "statistics";
