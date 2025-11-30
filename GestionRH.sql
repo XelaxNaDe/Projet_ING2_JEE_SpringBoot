@@ -133,6 +133,11 @@ WHERE e.email = 'sarah@cytech.fr' AND r.nom_role = 'HEADDEPARTEMENT';
 INSERT INTO Employee_Role (id, id_role)
 SELECT e.id, r.id_role 
 FROM Employee e, Role r 
+WHERE e.email = 'sarah@cytech.fr' AND r.nom_role = 'PROJECTMANAGER';
+
+INSERT INTO Employee_Role (id, id_role)
+SELECT e.id, r.id_role 
+FROM Employee e, Role r 
 WHERE e.email = 'mike@cytech.fr' AND r.nom_role = 'PROJECTMANAGER';
 
 UPDATE Departement 
