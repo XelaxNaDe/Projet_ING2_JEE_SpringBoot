@@ -70,7 +70,7 @@ public class DashboardController {
         return "connexion";
     }
 
-    // DÉCONNEXION
+    // DECONNEXION
     @GetMapping("/logout")
     public String logout(HttpSession session) {
         session.invalidate();
@@ -79,8 +79,8 @@ public class DashboardController {
 
     @GetMapping("/")
     public String home(Model model, HttpSession session) {
-        // Sécurité : Si pas connecté, on redirige vers le login
-        // (Comme c'est le même contrôleur, Spring trouve le chemin tout de suite)
+        // Sécurité Si pas connecté, on redirige vers le login
+        // Comme c'est le même contrôleur, Spring trouve le chemin tout de suite
         if (session.getAttribute("currentUser") == null) {
             return "redirect:/login";
         }
@@ -94,13 +94,13 @@ public class DashboardController {
         return "dashboard"; // Cherche src/main/resources/templates/dashboard.html
     }
 
-    // 1. Afficher la page Profil
+    // Afficher la page Profil
     @GetMapping("/profile")
     public String showProfile(HttpSession session, Model model) {
         Employee currentUser = (Employee) session.getAttribute("currentUser");
         if (currentUser == null) return "redirect:/login";
 
-        // On recharge les données depuis la BDD pour être sûr d'avoir la version à jour
+        // On recharge les données depuis la BDD
         Optional<Employee> empOpt = employeeRepository.findById(currentUser.getId());
         if (empOpt.isPresent()) {
             model.addAttribute("employee", empOpt.get());
@@ -110,7 +110,7 @@ public class DashboardController {
         return "redirect:/login";
     }
 
-    // 2. Traiter la mise à jour
+    // Traiter la mise à jour
     @PostMapping("/profile/update")
     public String updateProfile(@RequestParam String email,
                                 @RequestParam(required = false) String password,
@@ -124,8 +124,8 @@ public class DashboardController {
         Employee empToUpdate = employeeRepository.findById(currentUser.getId()).orElse(null);
         if (empToUpdate == null) return "redirect:/login";
 
-        // --- Vérification Email Unique ---
-        // Si l'email change, on vérifie qu'il n'est pas déjà pris par un autre employé
+        // Vérification Email Unique
+        // Si on change l'email on regarde si il est pas utiliser par un autre
         if (!email.equals(empToUpdate.getEmail())) {
             Optional<Employee> existing = employeeRepository.findByEmail(email);
             if (existing.isPresent()) {
@@ -136,7 +136,7 @@ public class DashboardController {
             empToUpdate.setEmail(email);
         }
 
-        // --- Changement de mot de passe si rempli ---
+        // Changement de mot de passe si rempli
         if (password != null && !password.isBlank()) {
             empToUpdate.setPassword(passwordEncoder.encode(password));
         }
