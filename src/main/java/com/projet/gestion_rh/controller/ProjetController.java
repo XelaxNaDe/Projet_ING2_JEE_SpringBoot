@@ -39,7 +39,7 @@ public class ProjetController {
         return false;
     }
 
-    // LECTURE (Accessible à tous les employés connectés)
+    // tout les employe peuvent voir la liste
     @GetMapping("/projets")
     public String projets(@RequestParam(required = false) Integer id,
                           @RequestParam(required = false) Integer editId,
@@ -130,7 +130,7 @@ public class ProjetController {
                 Employee chef = chefOptional.get();
                 
                 savedProjet.setChefProjet(chef);
-                projetRepository.save(savedProjet); // Mise à jour de la relation chef
+                projetRepository.save(savedProjet); 
 
                 boolean inTeam = chef.getProjets().stream()
                         .anyMatch(proj -> proj.getIdProjet() == savedProjet.getIdProjet());
@@ -146,7 +146,7 @@ public class ProjetController {
         }
     }
 
-    // AFFECTATION (Admin ou Le Chef du projet)
+    // affecter
     @PostMapping("/projets/assign")
     public String assignToProjet(@RequestParam int projetId, @RequestParam int empId, HttpSession session) {
         Employee user = (Employee) session.getAttribute("currentUser");
@@ -163,7 +163,7 @@ public class ProjetController {
         return "redirect:/projets?id=" + projetId;
     }
 
-    // RETIRER UN MEMBRE (Admin ou Le Chef du projet)
+    // retire
     @PostMapping("/projets/unassign")
     public String unassignFromProjet(@RequestParam int projetId, 
                                      @RequestParam int empId, 
@@ -184,7 +184,7 @@ public class ProjetController {
         return "redirect:/projets?id=" + projetId;
     }
 
-    // SUPPRESSION (Admin ou Le Chef du projet)
+    // supprimer
     @PostMapping("/projets/delete")
     public String deleteProjet(@RequestParam int id, HttpSession session) {
         Employee user = (Employee) session.getAttribute("currentUser");
