@@ -24,12 +24,10 @@ public class Employee {
     private String password;
     private String position;
 
-    // Relation vers Departement (Clé étrangère id_departement)
     @ManyToOne
     @JoinColumn(name = "id_departement")
     private Departement departement;
 
-    // Relation ManyToMany vers Role (Table de jointure Employee_Role)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "Employee_Role",
@@ -38,7 +36,6 @@ public class Employee {
     )
     private Set<Role> roles = new HashSet<>();
 
-    // Relation ManyToMany vers Projet (Table de jointure Employe_Projet)
     @ManyToMany
     @JoinTable(
         name = "Employe_Projet",
@@ -55,7 +52,6 @@ public class Employee {
                    .anyMatch(r -> r.getNomRole().equals(roleName));
     }
     
-    // Constructeur utile pour l'inscription
     public Employee(String fname, String sname, String email, String password, Departement departement) {
         this.fname = fname;
         this.sname = sname;
@@ -64,7 +60,6 @@ public class Employee {
         this.departement = departement;
     }
 
-    // Getters / Setters
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getFname() { return fname; }
