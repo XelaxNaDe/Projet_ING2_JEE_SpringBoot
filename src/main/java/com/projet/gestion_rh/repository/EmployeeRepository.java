@@ -10,18 +10,15 @@ import org.springframework.data.repository.query.Param;
 import com.projet.gestion_rh.model.Departement;
 import com.projet.gestion_rh.model.Employee;
 
-// <Employee, Integer> car l'ID de Employee est un 'int'
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
-    
-    // Pour le Login
+
     Optional<Employee> findByEmail(String email);
 
     Optional<Employee> findByEmailAndPassword(String email, String password);
 
     List<Employee> findByDepartement(Departement departement);
 
-    // Recherche : prénom, nom, poste, departement
     @Query("""
            SELECT e FROM Employee e
            WHERE (:fname IS NULL OR LOWER(e.fname) LIKE LOWER(CONCAT('%', :fname, '%')))
